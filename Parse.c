@@ -40,7 +40,8 @@ struct file_info* process_file(const char* file_path)
 	printf("Height = %d\n", file_data->height); 
        	printf("Max = %d\n", file_data->max_val);
 	free(file_contents);
-	return file_data;
+	
+	return (ret_val) ? file_data : NULL;
 }
 
 byte is_digit(const char c)

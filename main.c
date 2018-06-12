@@ -4,8 +4,6 @@
 #include <string.h>
 #include "Parse.h"
 
-
-
 int main(int argc, char** argv)
 {
 	if(argc <= 1)
@@ -16,8 +14,12 @@ int main(int argc, char** argv)
 	else
 	{
 		struct file_info* file_data = process_file(argv[1]);
-		byte b = file_data->type == 3;
-		destroy_file(file_data);
-		return b;
+		if(file_data)
+		{
+			byte b = file_data->type == 3;
+			destroy_file(file_data);
+			return b;
+		}
+		else return -1;
 	}
 }
