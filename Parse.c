@@ -13,6 +13,52 @@ void destroy_file(struct file_info* file_data)
 	free(file_data);
 }
 
+void print_to_char_address(int argc, ...)
+{
+	va_list valist;
+	va_start(valist, argc);
+	//First arg is str location
+	char** str_loc = va_arg(valist, char**);
+	const char* format = va_arg(valist, const char*);
+	uint added = sprintf(*str_loc, format, valist);
+	*str_loc += added;
+	va_end(valist);
+}
+
+void print_to_file(const char* file_name, const char* to_print)
+{
+	FILE* file = fopen(file_name, "w");
+	fprintf(file, "%s", to_print);
+	fclose(file);
+}
+
+void print_to_ppm(const char* file_name, struct file_info* file_data)
+{
+	uint file_size = 2+1 //first line 'P3'
+			+16+2 //second line width, height
+			+8+1 //third line max_value
+			+(16 * 3 * file_data->width*file_data->height) //size of each number
+			+(3 * file_data->width*file_data->height); //number of whitespace chars
+	char* to_print = malloc(file_size);
+	char* current_char = to_print;
+	*current_char = 'P';
+	current_char++;
+	current_char += sprintf(current_char, "%u\n", file_data->type);
+	current_char += sprintf(current_char, "%u %u\n", file_data->width, file_data->height);
+	current_char += sprintf(current_char, "%u\n", file_data->max_val);
+
+	for(uint i = 0; i < file_data->height; i++)
+	{
+		for(uint j = 0; j < file_data->width * 3; j++)
+		{
+			uint current_val = *(file_data->colour_vals + (i*3*file_data->width) + j);
+			current_char += sprintf(current_char, "%u\n", current_val);
+		}
+	}
+	print_to_file(file_name, to_print);
+	free(to_print);
+}
+
 struct file_info* process_file(const char* file_path)
 {
 	FILE* file = fopen(file_path, "r");

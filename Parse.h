@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <assert.h>
 #include <string.h>
+#include <stdarg.h>
 
 typedef unsigned char byte;
 typedef unsigned int uint;
@@ -23,6 +24,8 @@ void allocate_colour_data(struct file_info* file_data);
 struct file_info* process_file(const char* file_path);
 
 void destroy_file(struct file_info* file_data);
+
+void print_to_ppm(const char* file_name, struct file_info* file_data);
 
 static const char digits[10] =
 {
