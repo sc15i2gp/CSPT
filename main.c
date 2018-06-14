@@ -4,9 +4,22 @@
 #include <string.h>
 #include "Parse.h"
 
+uint hash_RGB(uint R, uint G, uint B)
+{
+	//Set result to be 0xRRGGBB
+	uint result = 0x000000;
+	R = (R << 24);
+	G = (G << 16);
+	B = (B << 8);
+	result = R | G | B;
+	return result;
+}
+
 //TODO: print file_info struct to file
 //TODO: Hash function for RGB values
-//TODO: Red-black tree implementation of hashmap
+//TODO: Implement map struct
+//		hashed RGB = > int which points to symbol
+//TODO: List of pairs of ints => pattern symbol file data
 //TODO: Create pattern image from input ppm
 //	Load pattern symbols into hashmap
 //	Create array of pattern symbol hashes with width*height of input file
@@ -28,8 +41,10 @@ int main(int argc, char** argv)
 		{
 			byte b = file_data->type == 3;
 			print_to_ppm("jotaro_copy.ppm", file_data);
+			uint hash = hash_RGB(0xFF, 0xA5, 0x10);
+			printf("hashed value = %08x\n", hash);
 			destroy_file(file_data);
-			return b;
+			return !b;
 		}
 		else return -1;
 	}
