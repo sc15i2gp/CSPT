@@ -81,15 +81,15 @@ struct transition
 	enum parse_state dest_state;
 };
 
-typedef enum state_return_code (*StateFunction)(const char input, struct parse_state_data* state_info, struct file_info* file_data);
+typedef enum state_return_code (*StateFunction)(const char input, struct parse_state_data* state_info);
 
-enum state_return_code start_state(const char input, struct parse_state_data* state_info, struct file_info* file_data);
+enum state_return_code start_state(const char input, struct parse_state_data* state_info);
 
-enum state_return_code type_state(const char input, struct parse_state_data* state_info, struct file_info* file_data);
+enum state_return_code type_state(const char input, struct parse_state_data* state_info);
 
-enum state_return_code info_number_state(const char input, struct parse_state_data* state_info, struct file_info* file_data);
+enum state_return_code info_number_state(const char input, struct parse_state_data* state_info);
 
-enum state_return_code colour_number_state(const char input, struct parse_state_data* state_info, struct file_info* file_data);
+enum state_return_code colour_number_state(const char input, struct parse_state_data* state_info);
 
 static const StateFunction state_functions[] =
 {

@@ -123,17 +123,13 @@ void set_state_buffer_char(struct parse_state_data* state_info, const char c)
 	state_info->char_buffer_pos++;
 }
 
-enum state_return_code start_state(const char input, struct parse_state_data* state_info, struct file_info* file_data)
+enum state_return_code start_state(const char input, struct parse_state_data* state_info)
 {
 	if(input == 'P') return RC_TRANSITION;
 	else return RC_INVALID;
 }
 
-//Type is a single digit, state takes a single digit and a whitespace
-//State data:
-//	byte for whether the digit has been read
-//	char buffer
-enum state_return_code type_state(const char input, struct parse_state_data* state_info, struct file_info* file_data)
+enum state_return_code type_state(const char input, struct parse_state_data* state_info)
 {
 	if(!state_info->is_whitespace_valid)
 	{
@@ -150,7 +146,7 @@ enum state_return_code type_state(const char input, struct parse_state_data* sta
 		if(is_whitespace(input))
 		{
 			set_state_buffer_char(state_info, 0);
-			file_data->type = (byte)atoi(state_info->buffer);
+			*(state_info->file_info_field.byte_field) = (byte)atoi(state_info->buffer);
 			return RC_TRANSITION;
 		}
 		else return RC_INVALID;
@@ -159,14 +155,7 @@ enum state_return_code type_state(const char input, struct parse_state_data* sta
 }
 
 
-//Number state takes up to 8 digit chars, and a whitespace
-//State data:
-//	byte to track to make sure at least one digit has been read (is_whitespace_valid)
-//	uint for which data field in file_info to write number to
-//	uint* for the address of data field
-//	char buffer for read digits
-//	char for which position in char buffer to write digit char to 
-enum state_return_code info_number_state(const char input, struct parse_state_data* state_info, struct file_info* file_data)
+enum state_return_code info_number_state(const char input, struct parse_state_data* state_info)
 {
 	if(!state_info->is_whitespace_valid)
 	{
@@ -189,7 +178,6 @@ enum state_return_code info_number_state(const char input, struct parse_state_da
 		else if(is_whitespace(input)) 
 		{
 			*(state_info->file_info_field.uint_field) = (uint)atoi(state_info->buffer);
-			if(state_info->file_info_field.uint_field == &(file_data->max_val)) allocate_colour_data(file_data); //If width and height have been read, allocate space for colour values
 			return RC_TRANSITION;
 		}
 		else return RC_INVALID;
@@ -197,14 +185,7 @@ enum state_return_code info_number_state(const char input, struct parse_state_da
 	return RC_INVALID;
 }
 
-//Number state reads colours values for pixels in ppm
-//State data:
-//	byte is_whitespace_valid
-//	char buffer
-//	uint for which index in the file_info's colour values array to write contents of char buffer into
-//	uint for position in char buffer to write digit char to
-//	uint* which points to index in file_info's colour values array
-enum state_return_code colour_number_state(const char input, struct parse_state_data* state_info, struct file_info* file_data)
+enum state_return_code colour_number_state(const char input, struct parse_state_data* state_info)
 {
 	if(!state_info->is_whitespace_valid)
 	{
@@ -300,27 +281,38 @@ void set_target_field(enum parse_state current_state, struct parse_state_data* s
 	}
 }
 
+void prepare_state(enum parse_state p_state, struct parse_state_data* state_data, StateFunction* state_func)
+{
+	*state_func = lookup_state_function(p_state);
+	reset_parse_state_data(state_data);
+}
+
 byte parsePPM(const char* ppm, struct file_info* file_data)
 {
+	//Input string data
 	uint str_length = strlen(ppm);
 	uint current_char_pos = 0;
 	const char* current_char = ppm;
+	
+	//State data
 	enum parse_state p_state = P_STATE_START;
 	enum parse_state before_invalid_state = P_STATE_INVALID;
 	enum state_return_code rc;
 	struct parse_state_data state_data;
-	reset_parse_state_data(&state_data);
-	StateFunction current_state_func = lookup_state_function(p_state);
+		
+	StateFunction current_state_func;
+	prepare_state(p_state, &state_data, &current_state_func);
+	
 	for(; p_state != P_STATE_END && p_state != P_STATE_INVALID; current_char++, current_char_pos++)
 	{
 		set_target_field(p_state, &state_data, file_data);
-		rc = current_state_func(*current_char, &state_data, file_data);
+		rc = current_state_func(*current_char, &state_data);
 		switch(rc)
 		{
 			case RC_TRANSITION:
 				p_state = transition_state(p_state, rc);
-				current_state_func = lookup_state_function(p_state);
-				reset_parse_state_data(&state_data);
+				if(p_state == P_STATE_MAX) allocate_colour_data(file_data);
+				prepare_state(p_state, &state_data, &current_state_func);
 				break;
 			case RC_INVALID:
 				before_invalid_state = p_state;
