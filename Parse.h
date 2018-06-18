@@ -19,6 +19,19 @@ struct file_info
 	uint* 	colour_vals;
 };
 
+struct parse_state_data
+{
+	byte is_whitespace_valid;
+	char buffer[8];
+	uint char_buffer_pos;
+	uint data_field_pos;
+	union
+	{
+		byte* byte_field;
+		uint* uint_field;
+	} file_info_field;
+};
+
 void allocate_colour_data(struct file_info* file_data);
 
 struct file_info* process_file(const char* file_path);
@@ -26,6 +39,8 @@ struct file_info* process_file(const char* file_path);
 void destroy_file(struct file_info* file_data);
 
 void print_to_ppm(const char* file_name, struct file_info* file_data);
+
+void reset_parse_state_data(struct parse_state_data* data);
 
 static const char digits[10] =
 {
@@ -66,15 +81,15 @@ struct transition
 	enum parse_state dest_state;
 };
 
-typedef enum state_return_code (*StateFunction)(const char input, struct file_info* file_data);
+typedef enum state_return_code (*StateFunction)(const char input, struct parse_state_data* state_info, struct file_info* file_data);
 
-enum state_return_code start_state(const char input, struct file_info* file_data);
+enum state_return_code start_state(const char input, struct parse_state_data* state_info, struct file_info* file_data);
 
-enum state_return_code type_state(const char input, struct file_info* file_data);
+enum state_return_code type_state(const char input, struct parse_state_data* state_info, struct file_info* file_data);
 
-enum state_return_code info_number_state(const char input, struct file_info* file_data);
+enum state_return_code info_number_state(const char input, struct parse_state_data* state_info, struct file_info* file_data);
 
-enum state_return_code colour_number_state(const char input, struct file_info* file_data);
+enum state_return_code colour_number_state(const char input, struct parse_state_data* state_info, struct file_info* file_data);
 
 static const StateFunction state_functions[] =
 {

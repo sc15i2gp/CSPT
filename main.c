@@ -15,8 +15,21 @@ uint hash_RGB(uint R, uint G, uint B)
 	return result;
 }
 
-//TODO: print file_info struct to file
-//TODO: Hash function for RGB values
+//TODO: Change state functions to handle resets to state_data fields
+//TODO: Remove reliance on static variables in parsing functions
+//	Parsing state struct which has state info
+//	Each state reads a number, delimited by a whitespace or 0
+//	Each state has:
+//		is_whitespace_valid
+//		char buffer
+//		uint* or byte* file_info field
+//		uint for which position in buffer to write digit char to
+//	Type state has:
+//		Nothing unique
+//	Info number state has:
+//		uint for which file_info info number data field to write to
+//	Colour number state has:
+//		uint for which file_info colour value data index to write to
 //TODO: Implement map struct
 //		hashed RGB = > int which points to symbol
 //TODO: List of pairs of ints => pattern symbol file data

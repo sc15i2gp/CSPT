@@ -34,6 +34,7 @@ void print_to_file(const char* file_name, const char* to_print)
 
 void print_to_ppm(const char* file_name, struct file_info* file_data)
 {
+	printf("Printing to ppm: %s...\n", file_name);
 	uint file_size = 2+1 //first line 'P3'
 			+16+2 //second line width, height
 			+8+1 //third line max_value
@@ -57,6 +58,7 @@ void print_to_ppm(const char* file_name, struct file_info* file_data)
 	}
 	print_to_file(file_name, to_print);
 	free(to_print);
+	printf("Done printing\n");
 }
 
 struct file_info* process_file(const char* file_path)
@@ -109,32 +111,46 @@ byte is_whitespace(const char c)
 }
 
 
-enum state_return_code start_state(const char input, struct file_info* file_data)
+void clear_state_char_buffer(struct parse_state_data* data)
+{
+	for(uint i = 0; i < 8; i++) data->buffer[i] = 0;
+}
+
+
+void set_state_buffer_char(struct parse_state_data* state_info, const char c)
+{
+	state_info->buffer[state_info->char_buffer_pos] = c;
+	state_info->char_buffer_pos++;
+}
+
+enum state_return_code start_state(const char input, struct parse_state_data* state_info, struct file_info* file_data)
 {
 	if(input == 'P') return RC_TRANSITION;
 	else return RC_INVALID;
 }
 
-enum state_return_code type_state(const char input, struct file_info* file_data)
+//Type is a single digit, state takes a single digit and a whitespace
+//State data:
+//	byte for whether the digit has been read
+//	char buffer
+enum state_return_code type_state(const char input, struct parse_state_data* state_info, struct file_info* file_data)
 {
-	static byte digit = 0;
-	static char buffer[2];
-	if(!digit)
+	if(!state_info->is_whitespace_valid)
 	{
 		if(is_digit(input))
 		{
-			digit = 1;
-			buffer[0] = input;
+			state_info->is_whitespace_valid = 1;
+			set_state_buffer_char(state_info, input);
 			return RC_REPEAT;
 		}
 		else return RC_INVALID;
 	}
-	else if(digit)
+	else
 	{
 		if(is_whitespace(input))
 		{
-			buffer[1] = 0;
-			file_data->type = (byte)atoi(buffer);
+			set_state_buffer_char(state_info, 0);
+			file_data->type = (byte)atoi(state_info->buffer);
 			return RC_TRANSITION;
 		}
 		else return RC_INVALID;
@@ -142,22 +158,23 @@ enum state_return_code type_state(const char input, struct file_info* file_data)
 	return RC_INVALID;
 }
 
-enum state_return_code info_number_state(const char input, struct file_info* file_data)
+
+//Number state takes up to 8 digit chars, and a whitespace
+//State data:
+//	byte to track to make sure at least one digit has been read (is_whitespace_valid)
+//	uint for which data field in file_info to write number to
+//	uint* for the address of data field
+//	char buffer for read digits
+//	char for which position in char buffer to write digit char to 
+enum state_return_code info_number_state(const char input, struct parse_state_data* state_info, struct file_info* file_data)
 {
-	static byte is_whitespace_valid = 0;
-	static uint target_data_field_index = 0;
-	static uint* target_data_field;
-       	target_data_field = &(file_data->width) + target_data_field_index;
-	static char buffer[8];
-	static char number_char_pos = 0;
-	if(!is_whitespace_valid)
+	if(!state_info->is_whitespace_valid)
 	{
-		for(uint i = 0; i < 8; i++) buffer[i] = 0;
+		clear_state_char_buffer(state_info);
 		if(is_digit(input))
 		{
-			is_whitespace_valid = 1;
-			buffer[number_char_pos] = input;
-			number_char_pos++;
+			state_info->is_whitespace_valid = 1;
+			set_state_buffer_char(state_info, input);
 			return RC_REPEAT;
 		}
 		else return RC_INVALID;
@@ -166,18 +183,13 @@ enum state_return_code info_number_state(const char input, struct file_info* fil
 	{
 		if(is_digit(input)) 
 		{
-			buffer[number_char_pos] = input;
-			number_char_pos++;
+			set_state_buffer_char(state_info, input);
 			return RC_REPEAT;
 		}
 		else if(is_whitespace(input)) 
 		{
-			*target_data_field = (uint)atoi(buffer);
-			for(uint i = 0; i < 8; i++) buffer[i] = 0;
-			number_char_pos = 0;
-			is_whitespace_valid = 0;
-			target_data_field_index++;
-			if(target_data_field_index == 2) allocate_colour_data(file_data);
+			*(state_info->file_info_field.uint_field) = (uint)atoi(state_info->buffer);
+			if(state_info->file_info_field.uint_field == &(file_data->max_val)) allocate_colour_data(file_data); //If width and height have been read, allocate space for colour values
 			return RC_TRANSITION;
 		}
 		else return RC_INVALID;
@@ -185,22 +197,22 @@ enum state_return_code info_number_state(const char input, struct file_info* fil
 	return RC_INVALID;
 }
 
-enum state_return_code colour_number_state(const char input, struct file_info* file_data)
+//Number state reads colours values for pixels in ppm
+//State data:
+//	byte is_whitespace_valid
+//	char buffer
+//	uint for which index in the file_info's colour values array to write contents of char buffer into
+//	uint for position in char buffer to write digit char to
+//	uint* which points to index in file_info's colour values array
+enum state_return_code colour_number_state(const char input, struct parse_state_data* state_info, struct file_info* file_data)
 {
-	static byte is_whitespace_valid = 0;
-	static char buffer[8];
-	static uint colour_number = 0;
-	static uint number_char_pos = 0;
-	static uint* colour_data_field;
-       	colour_data_field = file_data->colour_vals + colour_number;
-	if(!is_whitespace_valid)
+	if(!state_info->is_whitespace_valid)
 	{
-		for(uint i = 0; i < 8; i++) buffer[i] = 0;
+		clear_state_char_buffer(state_info);
 		if(is_digit(input))
 		{
-			is_whitespace_valid = 1;
-			buffer[number_char_pos] = input;
-			number_char_pos++;
+			state_info->is_whitespace_valid = 1;
+			set_state_buffer_char(state_info, input);
 			return RC_REPEAT;
 		}
 		else if(input == 0) return RC_END;
@@ -210,17 +222,13 @@ enum state_return_code colour_number_state(const char input, struct file_info* f
 	{
 		if(is_digit(input))
 		{
-			buffer[number_char_pos] = input;
-			number_char_pos++;
+			set_state_buffer_char(state_info, input);
 			return RC_REPEAT;
 		}
 		else if(is_whitespace(input))
 		{
-			*colour_data_field = (uint)atoi(buffer);
-			colour_number++;
-			for(uint i = 0; i < 8; i++) buffer[i] = 0;
-			number_char_pos = 0;
-			is_whitespace_valid = 0;
+			*(state_info->file_info_field.uint_field) = (uint)atoi(state_info->buffer);
+			state_info->data_field_pos++;
 			return RC_TRANSITION;
 		}
 		else return RC_INVALID;
@@ -258,6 +266,40 @@ enum parse_state transition_state(enum parse_state p_state, enum state_return_co
 	return dest_state;
 }
 
+void reset_parse_state_data(struct parse_state_data* data)
+{
+	data->is_whitespace_valid = 0;
+	clear_state_char_buffer(data);
+	data->char_buffer_pos = 0;
+	data->file_info_field.byte_field = NULL;
+}
+
+void set_target_field(enum parse_state current_state, struct parse_state_data* state_info, struct file_info* file_data)
+{
+	switch(current_state)
+	{
+		case P_STATE_TYPE:
+			state_info->file_info_field.byte_field = &(file_data->type);
+			break;
+		case P_STATE_WIDTH:
+			state_info->file_info_field.uint_field = &(file_data->width);
+			break;
+		case P_STATE_HEIGHT:
+			state_info->file_info_field.uint_field = &(file_data->height);
+			break;
+		case P_STATE_MAX:
+			state_info->file_info_field.uint_field = &(file_data->max_val);
+		       break;
+		case P_STATE_R:
+		case P_STATE_G:
+		case P_STATE_B:
+			state_info->file_info_field.uint_field = file_data->colour_vals + state_info->data_field_pos;
+		 	break;
+		default:
+			break;	
+	}
+}
+
 byte parsePPM(const char* ppm, struct file_info* file_data)
 {
 	uint str_length = strlen(ppm);
@@ -266,15 +308,19 @@ byte parsePPM(const char* ppm, struct file_info* file_data)
 	enum parse_state p_state = P_STATE_START;
 	enum parse_state before_invalid_state = P_STATE_INVALID;
 	enum state_return_code rc;
+	struct parse_state_data state_data;
+	reset_parse_state_data(&state_data);
 	StateFunction current_state_func = lookup_state_function(p_state);
 	for(; p_state != P_STATE_END && p_state != P_STATE_INVALID; current_char++, current_char_pos++)
 	{
-		rc = current_state_func(*current_char, file_data);
+		set_target_field(p_state, &state_data, file_data);
+		rc = current_state_func(*current_char, &state_data, file_data);
 		switch(rc)
 		{
 			case RC_TRANSITION:
 				p_state = transition_state(p_state, rc);
 				current_state_func = lookup_state_function(p_state);
+				reset_parse_state_data(&state_data);
 				break;
 			case RC_INVALID:
 				before_invalid_state = p_state;
