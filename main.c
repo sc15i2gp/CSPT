@@ -15,9 +15,7 @@ uint hash_RGB(uint R, uint G, uint B)
 	return result;
 }
 
-//TODO: Separate file_data from state functions
-//		Remove allocate_colour_data call and check from info_colour_state_function
-//		Remove setting type field in type_state_function
+//TODO: Find some way of splitting state functions down further
 //TODO: Implement map struct
 //		hashed RGB = > int which points to symbol
 //TODO: List of pairs of ints => pattern symbol file data

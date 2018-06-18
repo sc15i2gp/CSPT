@@ -129,47 +129,8 @@ enum state_return_code start_state(const char input, struct parse_state_data* st
 	else return RC_INVALID;
 }
 
-enum state_return_code type_state(const char input, struct parse_state_data* state_info)
+enum state_return_code handle_char(const char input, struct parse_state_data* state_info)
 {
-	if(!state_info->is_whitespace_valid)
-	{
-		if(is_digit(input))
-		{
-			state_info->is_whitespace_valid = 1;
-			set_state_buffer_char(state_info, input);
-			return RC_REPEAT;
-		}
-		else return RC_INVALID;
-	}
-	else
-	{
-		if(is_whitespace(input))
-		{
-			set_state_buffer_char(state_info, 0);
-			*(state_info->file_info_field.byte_field) = (byte)atoi(state_info->buffer);
-			return RC_TRANSITION;
-		}
-		else return RC_INVALID;
-	}
-	return RC_INVALID;
-}
-
-
-enum state_return_code info_number_state(const char input, struct parse_state_data* state_info)
-{
-	if(!state_info->is_whitespace_valid)
-	{
-		clear_state_char_buffer(state_info);
-		if(is_digit(input))
-		{
-			state_info->is_whitespace_valid = 1;
-			set_state_buffer_char(state_info, input);
-			return RC_REPEAT;
-		}
-		else return RC_INVALID;
-	}
-	else
-	{
 		if(is_digit(input)) 
 		{
 			set_state_buffer_char(state_info, input);
@@ -181,6 +142,44 @@ enum state_return_code info_number_state(const char input, struct parse_state_da
 			return RC_TRANSITION;
 		}
 		else return RC_INVALID;
+}
+
+enum state_return_code handle_first_char(const char input, struct parse_state_data* state_info)
+{
+	if(is_digit(input))
+	{
+		state_info->is_whitespace_valid = 1;
+		set_state_buffer_char(state_info, input);
+		return RC_REPEAT;
+	}
+	else return RC_INVALID;	
+}
+
+enum state_return_code type_state(const char input, struct parse_state_data* state_info)
+{
+	if(!state_info->is_whitespace_valid)
+	{
+		return handle_first_char(input, state_info);
+	}
+	else
+	{
+		enum state_return_code rc = handle_char(input, state_info);
+
+		return (rc != RC_REPEAT) ? rc : RC_INVALID;
+	}
+	return RC_INVALID;
+}
+
+
+enum state_return_code info_number_state(const char input, struct parse_state_data* state_info)
+{
+	if(!state_info->is_whitespace_valid)
+	{
+		return handle_first_char(input, state_info);
+	}
+	else
+	{
+		return handle_char(input, state_info);
 	}
 	return RC_INVALID;
 }
@@ -189,30 +188,14 @@ enum state_return_code colour_number_state(const char input, struct parse_state_
 {
 	if(!state_info->is_whitespace_valid)
 	{
-		clear_state_char_buffer(state_info);
-		if(is_digit(input))
-		{
-			state_info->is_whitespace_valid = 1;
-			set_state_buffer_char(state_info, input);
-			return RC_REPEAT;
-		}
-		else if(input == 0) return RC_END;
-		else return RC_INVALID;
+		if(input == 0) return RC_END;
+		else return handle_first_char(input, state_info);
 	}
 	else
 	{
-		if(is_digit(input))
-		{
-			set_state_buffer_char(state_info, input);
-			return RC_REPEAT;
-		}
-		else if(is_whitespace(input))
-		{
-			*(state_info->file_info_field.uint_field) = (uint)atoi(state_info->buffer);
-			state_info->data_field_pos++;
-			return RC_TRANSITION;
-		}
-		else return RC_INVALID;
+		enum state_return_code rc = handle_char(input, state_info);
+		if(rc == RC_TRANSITION) state_info->data_field_pos++;
+		return rc;
 	}
 	return RC_INVALID;
 }
