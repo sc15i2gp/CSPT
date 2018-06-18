@@ -6,18 +6,11 @@
 #include <assert.h>
 #include <string.h>
 #include <stdarg.h>
+#include "FileInfo.h"
 
 typedef unsigned char byte;
 typedef unsigned int uint;
 
-struct file_info
-{
-	byte 	type;
-	uint 	width;
-	uint 	height;
-	uint 	max_val;
-	uint* 	colour_vals;
-};
 
 struct parse_state_data
 {
