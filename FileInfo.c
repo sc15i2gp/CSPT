@@ -13,6 +13,13 @@ void destroy_file(struct file_info* file_data)
 	free(file_data);
 }
 
+void print_to_file(const char* file_name, const char* to_print)
+{
+	FILE* file = fopen(file_name, "w");
+	fprintf(file, "%s", to_print);
+	fclose(file);
+}
+
 void print_to_ppm(const char* file_name, struct file_info* file_data)
 {
 	printf("Printing to ppm: %s...\n", file_name);
