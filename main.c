@@ -3,6 +3,7 @@
 #include <assert.h>
 #include <string.h>
 #include "Parse.h"
+#include "Map.h"
 
 uint hash_RGB(uint R, uint G, uint B)
 {
@@ -15,8 +16,6 @@ uint hash_RGB(uint R, uint G, uint B)
 	return result;
 }
 
-//TODO: Make switch to g++
-//		Cast malloc pointers
 //TODO: Implement map struct
 //		hashed RGB = > int which points to symbol
 //TODO: List of pairs of ints => pattern symbol file data

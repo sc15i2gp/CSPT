@@ -33,4 +33,9 @@ struct rb_tree
 	struct node* root;
 };
 
+struct rb_tree* create_rb_tree();
+void destroy_rb_tree(struct rb_tree*);
+byte is_balanced(struct rb_tree*);
+byte insert(struct rb_tree*, struct kv_pair pair);
+
 #endif
