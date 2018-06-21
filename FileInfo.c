@@ -4,7 +4,7 @@ void allocate_colour_data(struct file_info* file_data)
 {
 	uint number_of_colour_vals = file_data->width * file_data->height;
 	printf("Allocating %d pixles of uints\n", number_of_colour_vals);
-	file_data->colour_vals = malloc(3 * number_of_colour_vals * sizeof(uint));
+	file_data->colour_vals = (uint*)malloc(3 * number_of_colour_vals * sizeof(uint));
 }
 
 void destroy_file(struct file_info* file_data)
@@ -28,7 +28,7 @@ void print_to_ppm(const char* file_name, struct file_info* file_data)
 			+8+1 //third line max_value
 			+(16 * 3 * file_data->width*file_data->height) //size of each number
 			+(3 * file_data->width*file_data->height); //number of whitespace chars
-	char* to_print = malloc(file_size);
+	char* to_print = (char*)malloc(file_size);
 	char* current_char = to_print;
 	*current_char = 'P';
 	current_char++;

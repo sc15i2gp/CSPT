@@ -15,7 +15,8 @@ uint hash_RGB(uint R, uint G, uint B)
 	return result;
 }
 
-//TODO: Find some way of splitting state functions down further
+//TODO: Make switch to g++
+//		Cast malloc pointers
 //TODO: Implement map struct
 //		hashed RGB = > int which points to symbol
 //TODO: List of pairs of ints => pattern symbol file data
