@@ -26,8 +26,26 @@ uint hash_RGB(uint R, uint G, uint B)
 //	Fill pattern symbol hashes array with hashes corresponding to each pixel's colour in input file
 //	Convert pattern symbol hashes array to uint array to output to ppm file
 
+void test_map()
+{
+	uint key = 10;
+	uint value = 56;
+	struct rb_tree* t = create_rb_tree();
+	struct kv_pair p = {10, 56};
+	byte result = insert_kv_pair(t, p);
+	assert(result != 0);
+	assert(p == t->root->pair);
+	assert(t->root->colour == BLACK);
+	p = {9, 13};
+	result = insert_kv_pair(t, p);
+	assert(result != 0);
+	assert(p == t->root->left_child->pair);
+	assert(t->root->left_child->colour == RED);
+}
+
 int main(int argc, char** argv)
 {
+	test_map();
 	if(argc <= 1)
 	{
 		printf("Error: No file specified!\n");

@@ -3,6 +3,7 @@
 
 #include <stdlib.h>
 #include <assert.h>
+#include <stdio.h>
 
 typedef unsigned char byte;
 typedef unsigned int uint;
@@ -33,9 +34,11 @@ struct rb_tree
 	struct node* root;
 };
 
+byte operator==(struct kv_pair, struct kv_pair);
+byte operator!=(struct kv_pair, struct kv_pair);
 struct rb_tree* create_rb_tree();
 void destroy_rb_tree(struct rb_tree*);
 byte is_balanced(struct rb_tree*);
-byte insert(struct rb_tree*, struct kv_pair pair);
+byte insert_kv_pair(struct rb_tree*, struct kv_pair pair);
 
 #endif

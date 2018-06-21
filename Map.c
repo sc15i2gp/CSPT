@@ -1,8 +1,13 @@
 #include "Map.h"
 
-struct node* null_node(struct rb_tree* tree)
+byte operator==(struct kv_pair p1, struct kv_pair p2)
 {
-	return tree->nodes;
+	return p1.key == p2.key && p1.value == p2.value;
+}
+
+byte operator!=(struct kv_pair p1, struct kv_pair p2)
+{
+	return !(p1 == p2);
 }
 
 struct rb_tree* create_rb_tree()
@@ -19,7 +24,17 @@ void destroy_rb_tree(struct rb_tree* tree)
 
 struct node* get_next_available_node(struct rb_tree* tree)
 {
-	for(uint i = 0; i < 128; i++) if(!tree->is_in_use[i]) return tree->nodes + i;
+	for(uint i = 0; i < 128; i++) 
+	{
+		if(!tree->is_in_use[i])
+		{
+			struct node* n = tree->nodes + i;
+			n->parent = NULL;
+			n->left_child = NULL;
+			n->right_child = NULL;
+			return n;
+		}
+	}
 	assert(0 && "Execution shouldn't reach here!");
 }
 
@@ -82,6 +97,7 @@ byte is_balanced(struct rb_tree* tree)
 
 void rebalance_tree(struct node* k, struct node* p)
 {
+	printf("Rebalancing tree\n");
 	byte parent_sibling_colour = BLACK;
 	struct node* g = p->parent;
 	struct node* s = (g->left_child != p) ? g->left_child : g->right_child;
@@ -101,6 +117,7 @@ void rebalance_tree(struct node* k, struct node* p)
 		uint swaps = -1;
 		while(swaps > 0)
 		{
+			swaps = 0;
 			for(uint i = 0; i < 2; i++)
 			{
 				if(tree_nodes[i]->pair.key > tree_nodes[i+1]->pair.key)
@@ -146,7 +163,7 @@ void rebalance_tree(struct node* k, struct node* p)
 }
 
 //Returns 0 if key already exists in tree
-byte insert(struct rb_tree* tree, struct kv_pair pair)
+byte insert_kv_pair(struct rb_tree* tree, struct kv_pair pair)
 {
 	//Calculate where pair should be written to
 	struct node** location = &(tree->root);
@@ -165,12 +182,13 @@ byte insert(struct rb_tree* tree, struct kv_pair pair)
 		}
 	}
 	//Get next available node
-	*location = get_next_available_node(tree);
-	(*location)->pair = pair;
-	(*location)->colour = RED;
-	(*location)->left_child = NULL;
-	(*location)->right_child = NULL;
-	(*location)->parent = parent;
+	struct node* new_node = get_next_available_node(tree);
+	new_node->pair = pair;
+	new_node->colour = RED;
+	new_node->left_child = NULL;
+	new_node->right_child = NULL;
+	new_node->parent = parent;
+	*location = new_node;
 	if(location == &(tree->root)) (*location)->colour = BLACK;
 	else if(parent->colour == RED)
 	{
