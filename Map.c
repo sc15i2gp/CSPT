@@ -32,6 +32,7 @@ struct node* get_next_available_node(struct rb_tree* tree)
 			n->parent = NULL;
 			n->left_child = NULL;
 			n->right_child = NULL;
+			tree->is_in_use[i] = 1;
 			return n;
 		}
 	}
@@ -95,9 +96,8 @@ byte is_balanced(struct rb_tree* tree)
 	return is_root_property_upheld(tree) && is_black_property_upheld(tree) && is_red_property_upheld(tree);	
 }
 
-void rebalance_tree(struct node* k, struct node* p)
+void rebalance_tree(struct rb_tree* tree, struct node* k, struct node* p)
 {
-	printf("Rebalancing tree\n");
 	byte parent_sibling_colour = BLACK;
 	struct node* g = p->parent;
 	struct node* s = (g->left_child != p) ? g->left_child : g->right_child;
@@ -132,6 +132,8 @@ void rebalance_tree(struct node* k, struct node* p)
 		//There are 2 subtrees which need to be placed back in order
 		//One is child of G, one is child of P
 		//Set mid tree node as parent of other 2
+		struct node* initial_left_child = tree_nodes[1]->left_child;
+		struct node* initial_right_child = tree_nodes[1]->right_child;
 		tree_nodes[1]->parent = g->parent;
 		tree_nodes[1]->left_child = tree_nodes[0];
 		tree_nodes[1]->right_child = tree_nodes[2];
@@ -141,13 +143,18 @@ void rebalance_tree(struct node* k, struct node* p)
 			//Set g's p child to p's non k child
 			struct node** p_non_k_child = (p->left_child != k) ? &(p->left_child) : &(p->right_child);
 			*g_p_child = *p_non_k_child;
+			g->parent = p;
 		}	
 		else //k is now parent node
 		{
 			struct node** p_k_child = (p->left_child == k) ? &(p->left_child) : &(p->right_child);
-			*p_k_child = (k->pair.key > p->pair.key) ? k->left_child : k->right_child;
-			*g_p_child = (k->pair.key > g->pair.key) ? k->left_child : k->right_child;
+			*p_k_child = (k->pair.key > p->pair.key) ? initial_left_child : initial_right_child;
+			*g_p_child = (k->pair.key > g->pair.key) ? initial_left_child : initial_right_child;
+			g->parent = k;
+			p->parent = k;
 		}
+		tree_nodes[1]->colour = BLACK;
+		g->colour = RED;
 	}
 	else if(parent_sibling_colour == RED)
 	{
@@ -158,8 +165,11 @@ void rebalance_tree(struct node* k, struct node* p)
 		//Set p and s's colours to black
 		p->colour = BLACK;
 		s->colour = BLACK;
-		if(g->colour == RED && g->parent->colour == RED) rebalance_tree(g, g->parent);
+		if(g->colour == RED && g->parent->colour == RED) rebalance_tree(tree, g, g->parent);
 	}
+	struct node* n = tree->root;
+	for(; n->parent != NULL; n = n->parent);
+	tree->root = n;
 }
 
 //Returns 0 if key already exists in tree
@@ -192,7 +202,7 @@ byte insert_kv_pair(struct rb_tree* tree, struct kv_pair pair)
 	if(location == &(tree->root)) (*location)->colour = BLACK;
 	else if(parent->colour == RED)
 	{
-		rebalance_tree(*location, parent);
+		rebalance_tree(tree, new_node, parent);
 	}
 	return 1;
 }

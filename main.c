@@ -16,6 +16,7 @@ uint hash_RGB(uint R, uint G, uint B)
 	return result;
 }
 
+//TODO: Root ptr in tree struct not being overwritten when rebalancing
 //TODO: Implement map struct
 //		hashed RGB = > int which points to symbol
 //TODO: List of pairs of ints => pattern symbol file data
@@ -31,16 +32,30 @@ void test_map()
 	uint key = 10;
 	uint value = 56;
 	struct rb_tree* t = create_rb_tree();
-	struct kv_pair p = {10, 56};
+	struct kv_pair p = {14, 56};
+	struct kv_pair grandparent = p;
 	byte result = insert_kv_pair(t, p);
 	assert(result != 0);
 	assert(p == t->root->pair);
 	assert(t->root->colour == BLACK);
-	p = {9, 13};
+	p = {10, 13};
+	struct kv_pair parent = p;
 	result = insert_kv_pair(t, p);
 	assert(result != 0);
 	assert(p == t->root->left_child->pair);
 	assert(t->root->left_child->colour == RED);
+	p = {10, 15};
+	result = insert_kv_pair(t, p);
+	assert(result == 0);
+	assert(p != t->root->left_child->pair);
+
+	p = {11, 15};
+	result = insert_kv_pair(t, p);
+	assert(result != 0);
+	printf("%d\n", t->root->pair.key);
+	assert(t->root->pair == p);
+	assert(t->root->left_child->pair == parent);
+	assert(t->root->right_child->pair == grandparent);
 }
 
 int main(int argc, char** argv)
