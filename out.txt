@@ -1,0 +1,15 @@
+Testing map...
+=====================================
+{ Key: 0 | Value: 0 | Colour: BLACK }
+{ Key: 3d0067 | Value: 0 | Colour: RED }
+{ Key: 516d87 | Value: 0 | Colour: BLACK }
+{ Key: 616180 | Value: 0 | Colour: BLACK }
+{ Key: 738caa | Value: 0 | Colour: RED }
+{ Key: bbd0da | Value: 0 | Colour: RED }
+{ Key: ffb000 | Value: 0 | Colour: BLACK }
+{ Key: ffffff | Value: 0 | Colour: RED }
+=====================================
+
+Asserting key 516d87
+Asserting key 0
+Asserting key 616180

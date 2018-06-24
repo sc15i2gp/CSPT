@@ -10,6 +10,27 @@ byte operator!=(struct kv_pair p1, struct kv_pair p2)
 	return !(p1 == p2);
 }
 
+uint count_nodes(struct rb_tree* t)
+{
+	uint c = 0;
+	for(uint i = 0; i < MAX_NODES; i++) if(t->is_in_use[i]) c++;
+	return c;
+}
+
+uint& rb_tree::operator[](uint key)
+{
+	if(is_key_in_tree(this, key)) 
+	{
+		return get_pair_of_key(this, key)->value;
+	}
+	else
+	{
+		struct kv_pair p = {key, 0};
+		byte b = insert_kv_pair(this, p);
+		return get_pair_of_key(this, key)->value;
+	}
+}
+
 struct rb_tree* create_rb_tree()
 {
 	struct rb_tree* tree = (struct rb_tree*)malloc(sizeof(struct rb_tree));
@@ -24,7 +45,7 @@ void destroy_rb_tree(struct rb_tree* tree)
 
 struct node* get_next_available_node(struct rb_tree* tree)
 {
-	for(uint i = 0; i < 128; i++) 
+	for(uint i = 0; i < MAX_NODES; i++) 
 	{
 		if(!tree->is_in_use[i])
 		{
@@ -37,6 +58,21 @@ struct node* get_next_available_node(struct rb_tree* tree)
 		}
 	}
 	assert(0 && "Execution shouldn't reach here!");
+}
+
+struct kv_pair* get_pair_of_key(struct node* n, uint key)
+{
+	if(!n) 			return NULL; else
+	if(n->pair.key == key) 	return &(n->pair); else
+	if(key < n->pair.key) 	return get_pair_of_key(n->left_child, key); else
+	if(key > n->pair.key)	return get_pair_of_key(n->right_child, key);
+
+	return NULL; //Shouldn't get here but stops ycm plugin from complaining
+}
+
+struct kv_pair* get_pair_of_key(struct rb_tree* t, uint key)
+{
+	return get_pair_of_key(t->root, key);
 }
 
 byte is_root_property_upheld(struct rb_tree* tree)
@@ -134,16 +170,24 @@ void rebalance_tree(struct rb_tree* tree, struct node* k, struct node* p)
 		//Set mid tree node as parent of other 2
 		struct node* initial_left_child = tree_nodes[1]->left_child;
 		struct node* initial_right_child = tree_nodes[1]->right_child;
+		
 		tree_nodes[1]->parent = g->parent;
 		tree_nodes[1]->left_child = tree_nodes[0];
 		tree_nodes[1]->right_child = tree_nodes[2];
 		struct node** g_p_child = (g->left_child == p) ? &(g->left_child) : &(g->right_child);
+		struct node** restruct_new_p_loc = NULL;
+		if(tree_nodes[1]->parent)
+		{
+			restruct_new_p_loc = (tree_nodes[1]->parent->left_child == g) ? &(tree_nodes[1]->parent->left_child) : &(tree_nodes[1]->parent->right_child);
+		}
 		if(tree_nodes[1] == p)
 		{
 			//Set g's p child to p's non k child
-			struct node** p_non_k_child = (p->left_child != k) ? &(p->left_child) : &(p->right_child);
-			*g_p_child = *p_non_k_child;
+			struct node** p_non_k_child = (initial_left_child != k) ? &(p->left_child) : &(p->right_child);
+			if(initial_left_child != k) *g_p_child = initial_left_child;
+			else *g_p_child = initial_right_child;
 			g->parent = p;
+
 		}	
 		else //k is now parent node
 		{
@@ -155,6 +199,7 @@ void rebalance_tree(struct rb_tree* tree, struct node* k, struct node* p)
 		}
 		tree_nodes[1]->colour = BLACK;
 		g->colour = RED;
+		if(restruct_new_p_loc) *restruct_new_p_loc = tree_nodes[1];
 	}
 	else if(parent_sibling_colour == RED)
 	{
@@ -205,4 +250,48 @@ byte insert_kv_pair(struct rb_tree* tree, struct kv_pair pair)
 		rebalance_tree(tree, new_node, parent);
 	}
 	return 1;
+}
+
+byte is_key_in_tree(struct rb_tree* t, uint key)
+{
+	struct node* n = t->root;
+	while(n)
+	{
+		if(key < n->pair.key) n = n->left_child;
+		else if(key > n->pair.key) n = n->right_child;
+		else return 1;
+	}
+	return 0;
+}
+
+void execute_for_each_pair(struct node* n, void (*func)(struct kv_pair*, uint))
+{
+	if(n)
+	{
+		struct kv_pair* p = &(n->pair);
+		execute_for_each_pair(n->left_child, func);
+		func(p, n->colour);
+		execute_for_each_pair(n->right_child, func);
+	}
+}
+
+void execute_for_each_pair(struct rb_tree* t, void (*func)(struct kv_pair*, uint))
+{
+	execute_for_each_pair(t->root, func);	
+}
+
+void execute_for_each_pair(struct node* n, uint* ptr, void (*func)(struct kv_pair*, uint*))
+{
+	if(n)
+	{
+		struct kv_pair* p = &(n->pair);
+		execute_for_each_pair(n->left_child, ptr, func);
+		func(p, ptr);
+		execute_for_each_pair(n->right_child, ptr, func);
+	}
+}
+
+void execute_for_each_pair(struct rb_tree* t, uint* ptr, void (*func)(struct kv_pair*, uint*))
+{
+	execute_for_each_pair(t->root, ptr, func);
 }
