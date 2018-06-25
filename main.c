@@ -28,11 +28,6 @@ const char* symbol_extension = ".ppm";
 
 #define NUM_SYMBOLS 31
 
-struct pattern_symbol_list
-{
-	struct file_info* symbol_files[NUM_SYMBOLS];
-	byte is_symbol_in_use[NUM_SYMBOLS];
-};
 
 void load_symbol(const char* symbol_path, struct file_info** symbol_loc)
 {
@@ -141,12 +136,25 @@ void print_stitch_count(struct rb_tree* t)
 	printf("Total number of stitches = %d\n", count);
 }
 
-void count_colours_in_file(struct file_info* file_data)
+struct rb_tree* load_colour_map(struct file_info* file_data)
 {
 	struct rb_tree* colour_map = create_rb_tree();
 	uint i_max = file_data->width * file_data->height;
+	for(uint i = 0; i < i_max; i++)
+	{
+		uint* px_RGB = file_data->colour_vals + 3*i;
+		uint key = hash_RGB(*px_RGB, *(px_RGB + 1), *(px_RGB + 2));
+		(*colour_map)[key];
+	}
+	return colour_map;
+}
+
+void count_colours_in_file(struct file_info* file_data)
+{
 	printf("Counting...\n");
+	struct rb_tree* colour_map = load_colour_map(file_data);
 	uint prev_RGB = -1;
+	uint i_max = file_data->width * file_data->height;
 	for(uint i = 0; i < i_max; i++)
 	{
 		uint* px_RGB = file_data->colour_vals + 3*i;
@@ -173,26 +181,60 @@ void test_symbols()
 	destroy_symbols(symbols);
 }
 
+byte create_pattern(const char* src_image_path)
+{
+	byte pattern_created = 0;
+	struct file_info** ps_list = load_symbols();
+	byte is_symbol_in_use[NUM_SYMBOLS];
+	struct file_info* src_image = process_file(src_image_path);
+	if(src_image)
+	{
+		count_colours_in_file(src_image);
+		
+		//Map of hashed RGB => pattern symbol
+		struct rb_tree* colour_symbol_map = load_colour_map(src_image);
+
+		//Construct colour map
+		struct rb_tree* colour_map = create_rb_tree();
+		uint i_max = src_image->width * src_image->height;
+		uint symbol_index = 1;
+		for(uint i = 0; i < i_max; i++)
+		{
+			uint* px_RGB = src_image->colour_vals + 3*i;
+			uint key = hash_RGB(*px_RGB, *(px_RGB + 1), *(px_RGB + 2));
+			//White should always map to the first symbol
+			if(!is_key_in_tree(colour_map, key))
+			{
+				if(key == 0xffffff) (*colour_map)[key] = 0;
+				else
+				{
+					(*colour_map)[key] = symbol_index;
+					symbol_index++;
+				}
+			}
+		}
+
+		print_colour_map(colour_map);
+
+		destroy_rb_tree(colour_symbol_map);
+		destroy_file(src_image);
+		pattern_created = 1;
+	}
+	destroy_symbols(ps_list);
+	return pattern_created;
+}
+
 int main(int argc, char** argv)
 {
 	test_symbols();
 	if(argc <= 1)
 	{
 		printf("Error: No file specified!\n");
-		return 1;
+		return 2;
 	}
 	else
 	{
-		struct file_info* file_data = process_file(argv[1]);
-		if(file_data)
-		{
-			byte b = file_data->type == 3;
-			print_to_ppm("jotaro_copy.ppm", file_data);
-			uint hash = hash_RGB(0xFF, 0xA5, 0x10);
-			count_colours_in_file(file_data);
-			destroy_file(file_data);
-			return !b;
-		}
-		else return -1;
+		byte pattern_created = create_pattern(argv[1]);
+		return !pattern_created;
 	}
 }
