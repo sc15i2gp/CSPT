@@ -27,18 +27,12 @@ struct file_info* process_file(const char* file_path)
 	fseek(file, 0, SEEK_END);
 	file_size = ftell(file) + 1;
 	fseek(file, 0, SEEK_SET);
-	printf("%s size = %d\n", file_path, file_size);
 	char* file_contents = (char*)malloc(file_size);
 	fread(file_contents, 1, file_size, file);
 	fclose(file);
 	file_contents[file_size-1] = 0;
 	struct file_info* file_data = (struct file_info*)malloc(sizeof(struct file_info));
 	byte ret_val = parsePPM(file_contents, file_data);
-	printf("Parsed = %d\n", ret_val);
-	printf("Type = %d\n", file_data->type);
-	printf("Width = %d\n", file_data->width); 
-	printf("Height = %d\n", file_data->height); 
-       	printf("Max = %d\n", file_data->max_val);
 	free(file_contents);
 	
 	return (ret_val) ? file_data : NULL;

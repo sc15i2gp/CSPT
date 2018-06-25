@@ -3,7 +3,6 @@
 void allocate_colour_data(struct file_info* file_data)
 {
 	uint number_of_colour_vals = file_data->width * file_data->height;
-	printf("Allocating %d pixles of uints\n", number_of_colour_vals);
 	file_data->colour_vals = (uint*)malloc(3 * number_of_colour_vals * sizeof(uint));
 }
 
