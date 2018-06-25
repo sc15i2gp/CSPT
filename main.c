@@ -5,36 +5,17 @@
 #include "Parse.h"
 #include "Map.h"
 
-uint hash_RGB(uint R, uint G, uint B)
-{
-	//Set result to be 0xRRGGBB
-	uint result = 0x000000;
-	R = (R << 16);
-	G = (G << 8);
-	B = (B << 0);
-	result = R | G | B;
-	return result;
-}
-
-void print_colour_pair(struct kv_pair* p, uint colour)
-{
-	const char* c = (colour == RED) ? "RED" : "BLACK";
-	printf("{ Key: %06x | Value: %04d | Colour: %s }\n", p->key, p->value, c);
-}
-
-//TODO: Tidy up map code
 //TODO: Create pattern image from input ppm
-//	Load pattern symbols into hashmap
+//	Load pattern symbols into list
 //	Create array of pattern symbol hashes with width*height of input file
 //	Hashmap of colour to times colour occurs
 //	Fill pattern symbol hashes array with hashes corresponding to each pixel's colour in input file
 //	Convert pattern symbol hashes array to uint array to output to ppm file
 
-void assert_node(struct node* n, uint key, uint colour)
+void print_colour_pair(struct kv_pair* p, uint colour)
 {
-	printf("Asserting key %x found key %x\n", key, n->pair.key);
-	assert(n->pair.key == key);
-	assert(n->colour == colour);
+	const char* c = (colour == RED) ? "RED" : "BLACK";
+	printf("{ Key: %06x | Value: %04d | Colour: %s }\n", p->key, p->value, c);
 }
 
 void print_colour_map(struct rb_tree* t)
@@ -43,35 +24,11 @@ void print_colour_map(struct rb_tree* t)
 	execute_for_each_pair(t, print_colour_pair);
 	printf("===========================================\n\n");
 }
-
-void sum_stitch_value(struct kv_pair* p, uint* count)
+void assert_node(struct node* n, uint key, uint colour)
 {
-	*count += p->value;
-}
-
-void print_stitch_count(struct rb_tree* t)
-{
-	uint count = 0;
-	execute_for_each_pair(t, &count, sum_stitch_value);
-	printf("Total number of stitches = %d\n", count);
-}
-
-void count_colours_in_file(struct file_info* file_data)
-{
-	struct rb_tree* colour_map = create_rb_tree();
-	uint i_max = file_data->width * file_data->height;
-	printf("Counting...\n");
-	uint prev_RGB = -1;
-	for(uint i = 0; i < i_max; i++)
-	{
-		uint* px_RGB = file_data->colour_vals + 3*i;
-		uint key = hash_RGB(*px_RGB, *(px_RGB + 1), *(px_RGB + 2));
-		(*colour_map)[key]++;
-	}
-	printf("Counted\n");
-	print_colour_map(colour_map);
-	print_stitch_count(colour_map);
-	destroy_rb_tree(colour_map);
+	printf("Asserting key %x found key %x\n", key, n->pair.key);
+	assert(n->pair.key == key);
+	assert(n->colour == colour);
 }
 
 void test_map()
@@ -109,9 +66,49 @@ void test_map()
 	printf("Map testing successful\n");
 }
 
+uint hash_RGB(uint R, uint G, uint B)
+{
+	//Set result to be 0xRRGGBB
+	uint result = 0x000000;
+	R = (R << 16);
+	G = (G << 8);
+	B = (B << 0);
+	result = R | G | B;
+	return result;
+}
+
+void sum_stitch_value(struct kv_pair* p, uint* count)
+{
+	*count += p->value;
+}
+
+void print_stitch_count(struct rb_tree* t)
+{
+	uint count = 0;
+	execute_for_each_pair(t, &count, sum_stitch_value);
+	printf("Total number of stitches = %d\n", count);
+}
+
+void count_colours_in_file(struct file_info* file_data)
+{
+	struct rb_tree* colour_map = create_rb_tree();
+	uint i_max = file_data->width * file_data->height;
+	printf("Counting...\n");
+	uint prev_RGB = -1;
+	for(uint i = 0; i < i_max; i++)
+	{
+		uint* px_RGB = file_data->colour_vals + 3*i;
+		uint key = hash_RGB(*px_RGB, *(px_RGB + 1), *(px_RGB + 2));
+		(*colour_map)[key]++;
+	}
+	printf("Counted\n");
+	print_colour_map(colour_map);
+	print_stitch_count(colour_map);
+	destroy_rb_tree(colour_map);
+}
+
 int main(int argc, char** argv)
 {
-	test_map();
 	if(argc <= 1)
 	{
 		printf("Error: No file specified!\n");
