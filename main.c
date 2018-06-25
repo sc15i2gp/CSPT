@@ -22,10 +22,7 @@ void print_colour_pair(struct kv_pair* p, uint colour)
 	printf("{ Key: %06x | Value: %04d | Colour: %s }\n", p->key, p->value, c);
 }
 
-//TODO: List of pairs of ints => pattern symbol file data
-//	List of colours and number of occurrences
-//		Traverse tree and print results
-//		FIX INFINITE LOOP ERROR
+//TODO: Tidy up map code
 //TODO: Create pattern image from input ppm
 //	Load pattern symbols into hashmap
 //	Create array of pattern symbol hashes with width*height of input file

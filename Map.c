@@ -10,6 +10,32 @@ byte operator!=(struct kv_pair p1, struct kv_pair p2)
 	return !(p1 == p2);
 }
 
+uint& rb_tree::operator[](uint key)
+{
+	if(!is_key_in_tree(this, key)) insert_kv_pair(this, kv_pair{key, 0});
+	return get_pair_of_key(this, key)->value;
+}
+
+
+
+
+
+struct rb_tree* create_rb_tree()
+{
+	struct rb_tree* t = (struct rb_tree*)malloc(sizeof(struct rb_tree));
+	t->root = NULL;
+	return t;
+}
+
+void destroy_rb_tree(struct rb_tree* t)
+{
+	free(t);
+}
+
+
+
+
+
 uint count_nodes(struct rb_tree* t)
 {
 	uint c = 0;
@@ -17,55 +43,40 @@ uint count_nodes(struct rb_tree* t)
 	return c;
 }
 
-uint& rb_tree::operator[](uint key)
-{
-	if(is_key_in_tree(this, key)) 
-	{
-		return get_pair_of_key(this, key)->value;
-	}
-	else
-	{
-		struct kv_pair p = {key, 0};
-		byte b = insert_kv_pair(this, p);
-		return get_pair_of_key(this, key)->value;
-	}
-}
-
-struct rb_tree* create_rb_tree()
-{
-	struct rb_tree* tree = (struct rb_tree*)malloc(sizeof(struct rb_tree));
-	tree->root = NULL;
-	return tree;
-}
-
-void destroy_rb_tree(struct rb_tree* tree)
-{
-	free(tree);
-}
-
-struct node* get_next_available_node(struct rb_tree* tree)
+struct node* get_next_available_node(struct rb_tree* t)
 {
 	for(uint i = 0; i < MAX_NODES; i++) 
 	{
-		if(!tree->is_in_use[i])
-		{
-			struct node* n = tree->nodes + i;
-			n->parent = NULL;
-			n->left_child = NULL;
-			n->right_child = NULL;
-			tree->is_in_use[i] = 1;
+		if(!t->is_in_use[i])
+		{//If node i isn't in use
+			struct node* 	n 		= t->nodes + i;
+					n->parent 	= NULL;
+					n->left_child 	= NULL;
+					n->right_child 	= NULL;
+
+			t->is_in_use[i] = 1; //node i now in use
+			
 			return n;
 		}
 	}
 	assert(0 && "Execution shouldn't reach here!");
 }
 
+
+
+
+
+byte node_contains_key(struct node* n, uint key)
+{
+	return n->pair.key == key;	
+}
+
 struct kv_pair* get_pair_of_key(struct node* n, uint key)
 {
-	if(!n) 			return NULL; else
-	if(n->pair.key == key) 	return &(n->pair); else
-	if(key < n->pair.key) 	return get_pair_of_key(n->left_child, key); else
-	if(key > n->pair.key)	return get_pair_of_key(n->right_child, key);
+	if(!n) 				return NULL; 					else
+	if(node_contains_key(n, key)) 	return &(n->pair); 				else
+	if(key < n->pair.key) 		return get_pair_of_key(n->left_child, key); 	else
+	if(key > n->pair.key)		return get_pair_of_key(n->right_child, key);
 
 	return NULL; //Shouldn't get here but stops ycm plugin from complaining
 }
@@ -75,158 +86,164 @@ struct kv_pair* get_pair_of_key(struct rb_tree* t, uint key)
 	return get_pair_of_key(t->root, key);
 }
 
-byte is_root_property_upheld(struct rb_tree* tree)
-{
-	return (tree->root) ? tree->root->colour == BLACK : 1;
-}
 
-byte is_black_property_upheld(struct node* node)
+
+
+
+byte is_key_in_tree(struct node* n, uint key)
 {
-	if(!node) return 1;
+	if(!n) return 0;
 	else
 	{
-		uint b_height_left = is_black_property_upheld(node->left_child);
-		if(!b_height_left) 			return 0;
-		
-		uint b_height_right = is_black_property_upheld(node->right_child);
-		if(!b_height_right) 			return 0;
-		
-		if(b_height_left != b_height_right) 	return 0;
-		else if(node->colour == BLACK) 		return b_height_left+1;
-		else 					return b_height_left;
+		if(key < n->pair.key) 		return is_key_in_tree(n->left_child, key); 	else
+		if(key > n->pair.key) 		return is_key_in_tree(n->right_child, key);
+		else 				return 1;
 	}
 }
 
-//Checks that the number of black nodes on all paths from the root to the leaves are equal
-byte is_black_property_upheld(struct rb_tree* tree)
+byte is_key_in_tree(struct rb_tree* t, uint key)
 {
-	return is_black_property_upheld(tree->root);
+	return is_key_in_tree(t->root, key);
 }
 
-byte is_red_property_upheld(struct node* node)
-{
-	if(!node) return BLACK;
-	else
-	{
-		uint left_red_property_upheld = is_red_property_upheld(node->left_child);
-		if(!left_red_property_upheld) 	return 0;
-		
-		uint right_red_property_upheld = is_red_property_upheld(node->right_child);
-		if(!right_red_property_upheld) 	return 0;
-		
-		//Node exists and both subtrees uphold red property
-		//Check if current node upholds red property
-		byte red_property_upheld = (node->colour == BLACK || left_red_property_upheld == right_red_property_upheld == BLACK);
-		return (red_property_upheld) ? node->colour : 0;
-	}
-}
 
-//Checks that all red nodes have black children
-byte is_red_property_upheld(struct rb_tree* tree)
-{
-	return is_red_property_upheld(tree->root);
-}
 
-byte is_balanced(struct rb_tree* tree)
-{
-	return is_root_property_upheld(tree) && is_black_property_upheld(tree) && is_red_property_upheld(tree);	
-}
 
-void rebalance_tree(struct rb_tree* tree, struct node* k, struct node* p)
+
+//Bubble sort for length 3 array for trinode restructuring (array should contain k, p, g)
+void sort_trinode_array(struct node* tree_nodes[3])
 {
-	byte parent_sibling_colour = BLACK;
-	struct node* g = p->parent;
-	struct node* s = (g->left_child != p) ? g->left_child : g->right_child;
-	if(g->left_child == p)
+	uint swaps = -1;
+	while(swaps > 0)
 	{
-		if(g->right_child) parent_sibling_colour = g->right_child->colour;
-	}
-	else
-	{
-		if(g->left_child) parent_sibling_colour = g->left_child->colour;
-	}
-	//Rebalance
-	if(parent_sibling_colour == BLACK)
-	{
-		//Trinode restructure
-		struct node* tree_nodes[3] = {k, p, g};
-		uint swaps = -1;
-		while(swaps > 0)
+		swaps = 0;
+		for(uint i = 0; i < 2; i++)
 		{
-			swaps = 0;
-			for(uint i = 0; i < 2; i++)
+			if(tree_nodes[i]->pair.key > tree_nodes[i+1]->pair.key)
 			{
-				if(tree_nodes[i]->pair.key > tree_nodes[i+1]->pair.key)
-				{
-					struct node* t = tree_nodes[i+1];
-					tree_nodes[i+1] = tree_nodes[i];
-					tree_nodes[i] = t;
-					swaps++;
-				}
+				struct node* t = tree_nodes[i+1];
+				tree_nodes[i+1] = tree_nodes[i];
+				tree_nodes[i] = t;
+				swaps++;
 			}
 		}
-		//There are 2 subtrees which need to be placed back in order
-		//One is child of G, one is child of P
-		//Set mid tree node as parent of other 2
-		struct node* initial_left_child = tree_nodes[1]->left_child;
-		struct node* initial_right_child = tree_nodes[1]->right_child;
-		
-		tree_nodes[1]->parent = g->parent;
-		tree_nodes[1]->left_child = tree_nodes[0];
-		tree_nodes[1]->right_child = tree_nodes[2];
-		struct node** g_p_child = (g->left_child == p) ? &(g->left_child) : &(g->right_child);
-		struct node** restruct_new_p_loc = NULL;
-		if(tree_nodes[1]->parent)
-		{
-			restruct_new_p_loc = (tree_nodes[1]->parent->left_child == g) ? &(tree_nodes[1]->parent->left_child) : &(tree_nodes[1]->parent->right_child);
-		}
-		if(tree_nodes[1] == p)
-		{
-			//Set g's p child to p's non k child
-			struct node** p_non_k_child = (initial_left_child != k) ? &(p->left_child) : &(p->right_child);
-			if(initial_left_child != k) *g_p_child = initial_left_child;
-			else *g_p_child = initial_right_child;
-			g->parent = p;
+	}
+}
 
-		}	
-		else //k is now parent node
-		{
-			struct node** p_k_child = (p->left_child == k) ? &(p->left_child) : &(p->right_child);
-			*p_k_child = (k->pair.key > p->pair.key) ? initial_left_child : initial_right_child;
-			*g_p_child = (k->pair.key > g->pair.key) ? initial_left_child : initial_right_child;
-			g->parent = k;
-			p->parent = k;
-		}
-		tree_nodes[1]->colour = BLACK;
-		g->colour = RED;
-		if(restruct_new_p_loc) *restruct_new_p_loc = tree_nodes[1];
+struct node* find_sibling_node(struct node* n)
+{
+	if(n->parent) 	return (n->parent->left_child != n) ? n->parent->left_child : n->parent->right_child;
+	else 		return NULL;
+}
+
+byte sibling_colour(struct node* n)
+{
+	struct node* s = find_sibling_node(n);
+	
+	if(s) 	return s->colour;
+	else 	return BLACK;
+}
+
+//Returns address of left_child or right_child variable in p which points to n
+struct node** get_address_of_child_node_var(struct node* n, struct node* p)
+{
+	return (p->left_child == n) ? &(p->left_child) : &(p->right_child);
+}
+
+void trinode_restructure(struct node* k, struct node* p, struct node* g)
+{
+	//Step: Set pointers for 3 nodes which make up trinode restructure
+	struct node* tree_nodes[3] = {k, p, g}; //These 3 constitute the trinode restructure
+	sort_trinode_array(tree_nodes);
+
+	struct node* new_parent_initial_left_child = 	tree_nodes[1]->left_child;
+	struct node* new_parent_initial_right_child = 	tree_nodes[1]->right_child;
+	
+	//Set middle node as parent of other 2
+	tree_nodes[1]->parent 		= g->parent;
+	tree_nodes[1]->left_child 	= tree_nodes[0];
+	tree_nodes[1]->right_child 	= tree_nodes[2];
+
+	tree_nodes[0]->parent 		= tree_nodes[1];
+	tree_nodes[2]->parent 		= tree_nodes[1];
+
+
+
+	//Step: Set child nodes of the children nodes of the trinode restructure, as well as the child node of g's original parent
+	struct node** g_p_child 		= get_address_of_child_node_var(p, g);
+	struct node** restruct_new_p_loc 	= (tree_nodes[1]->parent) ? get_address_of_child_node_var(g, tree_nodes[1]->parent) : NULL;	
+	
+	if(tree_nodes[1] == p) 	
+	{// If p is the new parent node
+		//The child node ptr which pointed to p will point to p's child which was not k
+		*g_p_child = (k != new_parent_initial_left_child) ? new_parent_initial_left_child : new_parent_initial_right_child;
+	}	
+	else
+	{// If k is the new parent node
+		struct node** p_k_child = get_address_of_child_node_var(k, p);
+		*p_k_child = (k->pair.key > p->pair.key) ? new_parent_initial_left_child : new_parent_initial_right_child;
+		*g_p_child = (k->pair.key > g->pair.key) ? new_parent_initial_left_child : new_parent_initial_right_child;
+	}
+
+	if(restruct_new_p_loc) *restruct_new_p_loc = tree_nodes[1];
+
+
+	
+	//Step: Paint parent of trinode restructure black and its children red
+	tree_nodes[1]->colour 	= BLACK;
+	g->colour 		= RED;
+}
+
+void recolour(struct node* p, struct node* s, struct node* g)
+{
+	//Recolouring
+	//Set g's colour to red unless g is root of tree
+	g->colour = (!g->parent) ? BLACK : RED;
+	
+	p->colour = BLACK;
+	s->colour = BLACK;
+}
+
+void reset_root_node(struct rb_tree* t)
+{
+	struct node* n = t->root;
+	for(; n->parent != NULL; n = n->parent);
+	t->root = n;
+}
+
+//FUTURE NOTE: If reading through this and confused by why non intuitive things are being done, consult http://pages.cs.wisc.edu/~paton/readings/Red-Black-Trees/#insert
+//Obvious steps have been removed or changed for logical consequences of the structure of rb_trees and node insertion (such as g always being the max or min value of trinode restructure)
+void rebalance_tree(struct rb_tree* t, struct node* k, struct node* p)
+{
+	byte parent_sibling_colour = sibling_colour(p);
+	struct node* g = p->parent;
+	
+	if(parent_sibling_colour == BLACK)
+	{
+		trinode_restructure(k, p, g);
 	}
 	else if(parent_sibling_colour == RED)
 	{
-		//Recolouring
-		//Set g's colour to red
-		if(!g->parent) g->colour = BLACK;
-		else g->colour = RED;
-		//Set p and s's colours to black
-		p->colour = BLACK;
-		s->colour = BLACK;
-		if(g->colour == RED && g->parent->colour == RED) rebalance_tree(tree, g, g->parent);
+		struct node* s = find_sibling_node(p);
+		recolour(p, s, g);
+		if(g->colour == RED && g->parent->colour == RED) rebalance_tree(t, g, g->parent);
 	}
-	struct node* n = tree->root;
-	for(; n->parent != NULL; n = n->parent);
-	tree->root = n;
+
+	reset_root_node(t);
 }
 
 //Returns 0 if key already exists in tree
-byte insert_kv_pair(struct rb_tree* tree, struct kv_pair pair)
+byte insert_kv_pair(struct rb_tree* t, struct kv_pair pair)
 {
-	//Calculate where pair should be written to
-	struct node** location = &(tree->root);
-	struct node* parent = NULL;
-	while(*location != NULL)
+	//Step: Calculate address where a node containing pair should be written
+	struct node** 	location 	= &(t->root);
+	struct node* 	parent 		= NULL;
+
+	while(*location)
 	{
 		parent = *location;
-		if((*location)->pair.key == pair.key) return 0;
+		if(node_contains_key(*location, pair.key)) return 0;
+		
 		else if(pair.key < (*location)->pair.key)
 		{
 			location  = &((*location)->left_child);
@@ -236,34 +253,34 @@ byte insert_kv_pair(struct rb_tree* tree, struct kv_pair pair)
 			location = &((*location)->right_child);
 		}
 	}
-	//Get next available node
-	struct node* new_node = get_next_available_node(tree);
-	new_node->pair = pair;
-	new_node->colour = RED;
-	new_node->left_child = NULL;
-	new_node->right_child = NULL;
-	new_node->parent = parent;
+
+
+
+
+
+	//Step: Write next available node to location 
+	struct node* new_node = get_next_available_node(t);
+	
+	new_node->pair 		= pair;
+	new_node->colour 	= RED;
+	new_node->parent 	= parent;
+	
 	*location = new_node;
-	if(location == &(tree->root)) (*location)->colour = BLACK;
-	else if(parent->colour == RED)
-	{
-		rebalance_tree(tree, new_node, parent);
-	}
+
+	//Step: Rebalance tree if it is unbalanced
+	if	(*location == t->root)		(*location)->colour = BLACK; 		//Upholds root property
+	else if	(parent->colour == RED)		rebalance_tree(t, new_node, parent); 	//Upholds black and red properties
+	
 	return 1;
 }
 
-byte is_key_in_tree(struct rb_tree* t, uint key)
-{
-	struct node* n = t->root;
-	while(n)
-	{
-		if(key < n->pair.key) n = n->left_child;
-		else if(key > n->pair.key) n = n->right_child;
-		else return 1;
-	}
-	return 0;
-}
 
+
+
+
+
+
+//Really not a fan of the way I've done this, restructure TODO?
 void execute_for_each_pair(struct node* n, void (*func)(struct kv_pair*, uint))
 {
 	if(n)
