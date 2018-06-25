@@ -5,15 +5,19 @@
 #include "Parse.h"
 #include "Map.h"
 
-//TODO: Create pattern image from input ppm
+//TODO: Program takes an image, creates a ppm by interpolating areas of colour, outputs a cross stitch pattern from this
+
+
+//TODO: Floss codes
+//	Floss codes are DMC
+//	Already have map of colours => symbols
+//	Need map of symbols => flosses
+//	Therefore also need map of colours => flosses
+//	
+//	For each colour in colour => symbol map:
+//		Print symbol => floss pair
 //
-//	Create file_data* for output pattern
-//	Calculate new size of file_data* colour_vals* and allocate
-//	For each row of pixels in input file:
-//		For each row of pixels in pattern symbol (i = 0 to 15):
-//			For each pixel in a row of input ppm
-//				Copy row[i] pixel values of pattern` symbol
-//
+//	Include symbol to DMC list on pattern
 
 const char* symbol_prefix = "Symbols/S_";
 const char* symbol_extension = ".ppm";
@@ -238,10 +242,20 @@ void populate_pattern_colour_data(struct file_info* src_image, struct file_info*
 		uint symbol_px_index = 3*(16*symbol_px_row + symbol_px_col);
 
 		uint* symbol_px_RGB = symbol->colour_vals + symbol_px_index;
+		uint symbol_px_colour = hash_RGB(*symbol_px_RGB, *(symbol_px_RGB + 1), *(symbol_px_RGB + 2));
 		uint* pat_px_RGB = pattern_image->colour_vals + 3*pat_px_index;
-		*pat_px_RGB = *symbol_px_RGB;
-		*(pat_px_RGB + 1) = *(symbol_px_RGB + 1);
-		*(pat_px_RGB + 2) = *(symbol_px_RGB + 2);
+		if(symbol_px_colour == 0xffffff)
+		{
+			*pat_px_RGB = *src_px_RGB;
+			*(pat_px_RGB + 1) = *(src_px_RGB + 1);
+			*(pat_px_RGB + 2) = *(src_px_RGB + 2);
+		}
+		else
+		{
+			*pat_px_RGB = *symbol_px_RGB;
+			*(pat_px_RGB + 1) = *(symbol_px_RGB + 1);
+			*(pat_px_RGB + 2) = *(symbol_px_RGB + 2);
+		}
 	}
 	destroy_symbols(ps_list);
 }

@@ -22,14 +22,14 @@ uint& rb_tree::operator[](uint key)
 
 struct rb_tree* create_rb_tree()
 {
-	struct rb_tree* t = (struct rb_tree*)malloc(sizeof(struct rb_tree));
+	struct rb_tree* t = new rb_tree();
 	t->root = NULL;
 	return t;
 }
 
 void destroy_rb_tree(struct rb_tree* t)
 {
-	free(t);
+	delete t;
 }
 
 
