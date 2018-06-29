@@ -1,5 +1,16 @@
 #include "Map.h"
 
+uint hash_RGB(uint R, uint G, uint B)
+{
+	//Set result to be 0xRRGGBB
+	uint result = 0x000000;
+	R = (R << 16);
+	G = (G << 8);
+	B = (B << 0);
+	result = R | G | B;
+	return result;
+}
+
 byte operator==(struct kv_pair p1, struct kv_pair p2)
 {
 	return p1.key == p2.key && p1.value == p2.value;

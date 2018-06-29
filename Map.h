@@ -37,6 +37,7 @@ struct rb_tree
 	uint& operator[](uint key);
 };
 
+uint hash_RGB(uint R, uint G, uint B);
 byte operator==(struct kv_pair, struct kv_pair);
 byte operator!=(struct kv_pair, struct kv_pair);
 struct rb_tree* create_rb_tree();
