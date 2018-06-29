@@ -4,15 +4,9 @@
 #include <stdlib.h>
 #include <assert.h>
 #include <stdio.h>
+#include "Pair.h"
 
 typedef unsigned char byte;
-typedef unsigned int uint;
-
-struct kv_pair
-{
-	uint key;
-	uint value;
-};
 
 
 #define BLACK 1
