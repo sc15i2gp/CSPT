@@ -1,6 +1,17 @@
 #include "Pattern.h"
 
+struct rb_tree* create_DMC_floss_map()
+{
+	struct rb_tree* floss_map = create_rb_tree();
+	
+	for(uint i = 0; i < FLOSS_COUNT; i++)
+	{
+		printf("%d pair = %x %d\n", i, DMC_flosses[i].key, DMC_flosses[i].value);
+		(*floss_map)[DMC_flosses[i].key] = DMC_flosses[i].value;
+	}
 
+	return floss_map;
+}
 
 void load_symbol(const char* symbol_path, struct file_info** symbol_loc)
 {
@@ -192,6 +203,9 @@ void create_pattern_from_src(struct file_info* src_image)
 
 byte create_pattern(const char* src_image_path)
 {
+	struct rb_tree* floss_map = create_DMC_floss_map();
+	print_colour_map(floss_map);
+	destroy_rb_tree(floss_map);
 	byte pattern_created = 0;
 	struct file_info* src_image = process_file(src_image_path);
 	if(src_image)

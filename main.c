@@ -6,6 +6,13 @@
 
 //END RESULT: Program takes an image, creates a ppm by interpolating areas of colour, outputs a cross stitch pattern from this
 
+//NOTE: Segfault on i = 44 when loading DMC floss map, due to being unable to find pair in get_pair()
+
+//TODO: Fix above segfault:
+//	Issue is due to erroneous pointer setting (parent ptrs pointing to grandparent etc.)
+//	Make standard function set_child(node n, node c, bool left) which not only sets n->child but also sets c->parent
+
+
 //TODO: Make load_symbols place white first and black second in symbols_list
 
 //TODO: Make rb_tree more generic

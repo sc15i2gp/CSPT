@@ -21,7 +21,7 @@ struct node
 	struct node* parent;
 };
 
-#define MAX_NODES 256
+#define MAX_NODES 512
 
 struct rb_tree
 {

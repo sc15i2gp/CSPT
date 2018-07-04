@@ -4,6 +4,7 @@
 #include "Map.h"
 #include "FileInfo.h"
 #include "Parse.h"
+#include "DMC.h"
 
 static const char* symbol_prefix = "Symbols/S_";
 static const char* symbol_extension = ".ppm";

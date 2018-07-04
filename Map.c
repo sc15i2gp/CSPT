@@ -187,15 +187,20 @@ void trinode_restructure(struct node* k, struct node* p, struct node* g)
 	if(tree_nodes[1] == p) 	
 	{// If p is the new parent node
 		//The child node ptr which pointed to p will point to p's child which was not k
-		*g_p_child = (k != new_parent_initial_left_child) ? new_parent_initial_left_child : new_parent_initial_right_child;
+		struct node* replacement_g_p_child = (k != new_parent_initial_left_child) ? new_parent_initial_left_child : new_parent_initial_right_child;
+		*g_p_child = replacement_g_p_child;
+		if(replacement_g_p_child) replacement_g_p_child->parent = g;
 	}	
 	else
 	{// If k is the new parent node
 		struct node** p_k_child = get_address_of_child_node_var(k, p);
-		*p_k_child = (k->pair.key > p->pair.key) ? new_parent_initial_left_child : new_parent_initial_right_child;
-		*g_p_child = (k->pair.key > g->pair.key) ? new_parent_initial_left_child : new_parent_initial_right_child;
+		struct node* replacement_g_p_child = (k->pair.key > g->pair.key) ? new_parent_initial_left_child : new_parent_initial_right_child;
+		struct node* replacement_p_k_child = (k->pair.key > p->pair.key) ? new_parent_initial_left_child : new_parent_initial_right_child;
+		*p_k_child = replacement_p_k_child;
+		if(replacement_p_k_child) replacement_p_k_child->parent = p;
+		*g_p_child = replacement_g_p_child;
+		if(replacement_g_p_child) replacement_g_p_child->parent = g;
 	}
-
 	if(restruct_new_p_loc) *restruct_new_p_loc = tree_nodes[1];
 
 
@@ -264,9 +269,6 @@ byte insert_kv_pair(struct rb_tree* t, struct kv_pair pair)
 			location = &((*location)->right_child);
 		}
 	}
-
-
-
 
 
 	//Step: Write next available node to location 
