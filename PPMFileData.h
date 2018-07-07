@@ -1,5 +1,5 @@
-#ifndef FILE_INFO_H
-#define FILE_INFO_H
+#ifndef PPM_FILE_DATA_H
+#define PPM_FILE_DATA_H
 
 #include <stdio.h>
 #include <stdlib.h>
