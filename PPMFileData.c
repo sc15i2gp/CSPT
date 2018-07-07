@@ -1,12 +1,12 @@
-#include "FileInfo.h"
+#include "PPMFileData.h"
 
-void allocate_colour_data(struct file_info* file_data)
+void allocate_colour_data(struct ppm_file_data* file_data)
 {
 	uint number_of_colour_vals = file_data->width * file_data->height;
 	file_data->colour_vals = (uint*)malloc(3 * number_of_colour_vals * sizeof(uint));
 }
 
-void destroy_file(struct file_info* file_data, byte should_dealloc_colours)
+void destroy_file(struct ppm_file_data* file_data, byte should_dealloc_colours)
 {
 	if(should_dealloc_colours && file_data->colour_vals) free(file_data->colour_vals);
 	free(file_data);
@@ -19,7 +19,7 @@ void print_to_file(const char* file_name, const char* to_print)
 	fclose(file);
 }
 
-void print_to_ppm(const char* file_name, struct file_info* file_data)
+void print_to_ppm(const char* file_name, struct ppm_file_data* file_data)
 {
 	printf("Printing to ppm: %s...\n", file_name);
 	uint file_size = 2+1 //first line 'P3'

@@ -6,17 +6,17 @@
 #include <assert.h>
 #include <string.h>
 #include <stdarg.h>
-#include "FileInfo.h"
 #include "ParseState.h"
+#include "PPMFileData.h"
 
 typedef unsigned char byte;
 typedef unsigned int uint;
 
 
-struct file_info* parse_ppm_file(const char* file_path);
+struct ppm_file_data* parse_ppm_file(const char* file_path);
 
 void reset_parse_state_data(struct parse_state_data* data);
 
-byte parsePPM(const char* ppm, struct file_info* file_data);
+byte parsePPM(const char* ppm, struct ppm_file_data* file_data);
 
 #endif

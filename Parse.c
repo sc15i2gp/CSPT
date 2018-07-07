@@ -13,7 +13,7 @@ void print_to_char_address(int argc, ...)
 	va_end(valist);
 }
 
-struct file_info* parse_ppm_file(const char* file_path)
+struct ppm_file_data* parse_ppm_file(const char* file_path)
 {
 	FILE* file = fopen(file_path, "r");
 	if(!file)
@@ -31,7 +31,7 @@ struct file_info* parse_ppm_file(const char* file_path)
 	fread(file_contents, 1, file_size, file);
 	fclose(file);
 	file_contents[file_size-1] = 0;
-	struct file_info* file_data = (struct file_info*)malloc(sizeof(struct file_info));
+	struct ppm_file_data* file_data = (struct ppm_file_data*)malloc(sizeof(struct ppm_file_data));
 	byte ret_val = parsePPM(file_contents, file_data);
 	free(file_contents);
 	
@@ -39,7 +39,7 @@ struct file_info* parse_ppm_file(const char* file_path)
 }
 
 
-void set_target_field(enum parse_state current_state, struct parse_state_data* state_info, struct file_info* file_data)
+void set_target_field(enum parse_state current_state, struct parse_state_data* state_info, struct ppm_file_data* file_data)
 {
 	switch(current_state)
 	{
@@ -66,7 +66,7 @@ void set_target_field(enum parse_state current_state, struct parse_state_data* s
 }
 
 
-byte parsePPM(const char* ppm, struct file_info* file_data)
+byte parsePPM(const char* ppm, struct ppm_file_data* file_data)
 {
 	//Input string data
 	uint str_length = strlen(ppm);

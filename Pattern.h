@@ -2,7 +2,7 @@
 #define PATTERN_H
 
 #include "Map.h"
-#include "FileInfo.h"
+#include "PPMFileData.h"
 #include "Parse.h"
 #include "DMC.h"
 

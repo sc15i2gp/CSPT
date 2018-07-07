@@ -13,11 +13,6 @@ struct rb_tree* create_DMC_floss_map()
 	return floss_map;
 }
 
-void load_symbol(const char* symbol_path, struct file_info** symbol_loc)
-{
-	*symbol_loc = parse_ppm_file(symbol_path);
-}
-
 uint** load_symbols()
 {
 	 uint** symbols = new uint*[NUM_SYMBOLS];
@@ -26,7 +21,7 @@ uint** load_symbols()
 	{
 		char* path = new char[strlen(symbol_prefix) + strlen(symbol_extension) + 2];
 		sprintf(path, "%s%02d%s", symbol_prefix, i, symbol_extension);
-		struct file_info* f = parse_ppm_file(path);
+		struct ppm_file_data* f = parse_ppm_file(path);
 		symbols[i] = f->colour_vals;
 		delete[] path;
 		destroy_file(f, 0);
@@ -69,7 +64,7 @@ void print_stitch_count(struct rb_tree* t)
 	printf("Total number of stitches = %d\n", count);
 }
 
-struct rb_tree* load_file_colours_into_map(struct file_info* file_data)
+struct rb_tree* load_file_colours_into_map(struct ppm_file_data* file_data)
 {
 	struct rb_tree* colour_map = create_rb_tree();
 	uint i_max = file_data->width * file_data->height;
@@ -82,7 +77,7 @@ struct rb_tree* load_file_colours_into_map(struct file_info* file_data)
 	return colour_map;
 }
 
-void count_colours_in_file(struct file_info* file_data)
+void count_colours_in_file(struct ppm_file_data* file_data)
 {
 	printf("Counting...\n");
 	struct rb_tree* colour_map = load_file_colours_into_map(file_data);
@@ -124,9 +119,9 @@ struct rb_tree* map_src_RGB_to_symbols(uint* src_colours, uint src_width, uint s
 	return colour_map;
 }
 
-struct file_info* create_pattern_image_info(uint src_width, uint src_height)
+struct ppm_file_data* create_pattern_image_info(uint src_width, uint src_height)
 {
-	struct file_info* pattern_image = new struct file_info;
+	struct ppm_file_data* pattern_image = new struct ppm_file_data;
 	uint type = 3;
 	//One pixel in src corresponds to a 16*16 symbol in output file
 	uint width = src_width * 16;
@@ -186,14 +181,14 @@ void populate_pattern_colour_data(uint* src_colours, uint src_width, uint src_he
 	destroy_symbols(ps_list);
 }
 
-void create_pattern_from_src(struct file_info* src_image)
+void create_pattern_from_src(struct ppm_file_data* src_image)
 {
 	count_colours_in_file(src_image);
 	
 	//Map of hashed RGB => pattern symbol
 	struct rb_tree* colour_map = map_src_RGB_to_symbols(src_image->colour_vals, src_image->width, src_image->height);
 	
-	struct file_info* pattern_image = create_pattern_image_info(src_image->width, src_image->height);
+	struct ppm_file_data* pattern_image = create_pattern_image_info(src_image->width, src_image->height);
 	
 	populate_pattern_colour_data(src_image->colour_vals, src_image->width, src_image->height, pattern_image->colour_vals, pattern_image->width, pattern_image->height, colour_map);
 
@@ -209,7 +204,7 @@ byte create_pattern(const char* src_image_path)
 	//print_colour_map(floss_map);
 	//destroy_rb_tree(floss_map);
 	byte pattern_created = 0;
-	struct file_info* src_image = parse_ppm_file(src_image_path);
+	struct ppm_file_data* src_image = parse_ppm_file(src_image_path);
 	if(src_image)
 	{
 		create_pattern_from_src(src_image);
