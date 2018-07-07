@@ -6,19 +6,18 @@
 
 //END RESULT: Program takes an image, creates a ppm by interpolating areas of colour, outputs a cross stitch pattern from this
 
-//TODO: Floss codes
-//	Floss codes are DMC
-//	Already have map of colours => symbols
-//	Need map of symbols => flosses
-//	Therefore also need map of colours => flosses
-//	
-//	For each colour in colour => symbol map:
-//		Print symbol => floss pair
-//
-//	Include symbol to DMC list on pattern
+//TODO: Restrict use of file_info struct and replace w/ uint* use where applicable
+//	Have symbols list store uint* instead of file_info
+//	Rename file_info to ppm_file_data
 
-//TODO: Put symbols => flosses map on output pattern
+//TODO: Create symbols => floss map image
 
+//TODO: Composite symbols pattern and map image into one output image
+
+//NOTE: Useful output info
+//	Number of stitches in a file
+//	Number of colours in a file
+//	Number of stitches of a particular colour in a file
 
 int main(int argc, char** argv)
 {

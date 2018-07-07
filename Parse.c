@@ -13,7 +13,7 @@ void print_to_char_address(int argc, ...)
 	va_end(valist);
 }
 
-struct file_info* process_file(const char* file_path)
+struct file_info* parse_ppm_file(const char* file_path)
 {
 	FILE* file = fopen(file_path, "r");
 	if(!file)

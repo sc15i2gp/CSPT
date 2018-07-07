@@ -13,7 +13,7 @@ typedef unsigned char byte;
 typedef unsigned int uint;
 
 
-struct file_info* process_file(const char* file_path);
+struct file_info* parse_ppm_file(const char* file_path);
 
 void reset_parse_state_data(struct parse_state_data* data);
 
