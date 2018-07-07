@@ -6,11 +6,12 @@
 
 //END RESULT: Program takes an image, creates a ppm by interpolating areas of colour, outputs a cross stitch pattern from this
 
-//TODO: Restrict use of file_info struct and replace w/ uint* use where applicable
-//	Have symbols list store uint* instead of file_info
-//	Rename file_info to ppm_file_data
-
 //TODO: Create symbols => floss map image
+//	Output as ppm
+//	Centered display
+//	Left aligned titles "Symbol" and "DMC Floss"
+//	Each line has symbol pic on left and floss code (digits) on right
+
 
 //TODO: Composite symbols pattern and map image into one output image
 
