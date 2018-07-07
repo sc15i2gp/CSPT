@@ -17,6 +17,6 @@ struct file_info
 };
 
 void allocate_colour_data(struct file_info*);
-void destroy_file(struct file_info*);
+void destroy_file(struct file_info*, byte should_dealloc_colours = 1);
 void print_to_ppm(const char* file_name, struct file_info*);
 #endif

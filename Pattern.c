@@ -18,25 +18,27 @@ void load_symbol(const char* symbol_path, struct file_info** symbol_loc)
 	*symbol_loc = parse_ppm_file(symbol_path);
 }
 
-struct file_info** load_symbols()
+uint** load_symbols()
 {
-	struct file_info** symbols = new struct file_info*[NUM_SYMBOLS];
+	 uint** symbols = new uint*[NUM_SYMBOLS];
 	
 	for(uint i = 0; i < NUM_SYMBOLS; i++)
 	{
 		char* path = new char[strlen(symbol_prefix) + strlen(symbol_extension) + 2];
 		sprintf(path, "%s%02d%s", symbol_prefix, i, symbol_extension);
-		symbols[i] = parse_ppm_file(path);
+		struct file_info* f = parse_ppm_file(path);
+		symbols[i] = f->colour_vals;
 		delete[] path;
+		destroy_file(f, 0);
 	}
 	return symbols;
 }
 
-void destroy_symbols(struct file_info** symbols)
+void destroy_symbols(uint** symbols)
 {
 	for(uint i = 0; i < NUM_SYMBOLS; i++)
 	{
-		destroy_file(symbols[i]);
+		delete[] symbols[i];
 	}
 	delete[] symbols;
 }
@@ -142,7 +144,7 @@ struct file_info* create_pattern_image_info(uint src_width, uint src_height)
 
 void populate_pattern_colour_data(uint* src_colours, uint src_width, uint src_height, uint* pattern_colours, uint pattern_width, uint pattern_height, struct rb_tree* colour_map)
 {
-	struct file_info** ps_list = load_symbols();
+	uint** ps_list = load_symbols();
 	//Transform src => {colour_map} =>  pattern_image
 	//For each pixel in pattern_image
 	for(uint pat_px_index = 0; pat_px_index < pattern_width * pattern_height; pat_px_index++)
@@ -157,7 +159,7 @@ void populate_pattern_colour_data(uint* src_colours, uint src_width, uint src_he
 		
 		uint* src_px_RGB = src_colours + src_px_index;
 		uint key = hash_RGB(*src_px_RGB, *(src_px_RGB + 1), *(src_px_RGB + 2));
-		struct file_info* symbol = ps_list[(*colour_map)[key]];
+		uint* symbol = ps_list[(*colour_map)[key]];
 
 		//Get symbol's pixel RGB to put in pat_px_index
 		uint symbol_px_row = pat_px_row % 16;
@@ -165,7 +167,7 @@ void populate_pattern_colour_data(uint* src_colours, uint src_width, uint src_he
 
 		uint symbol_px_index = 3*(16*symbol_px_row + symbol_px_col);
 
-		uint* symbol_px_RGB = symbol->colour_vals + symbol_px_index;
+		uint* symbol_px_RGB = symbol + symbol_px_index;
 		uint symbol_px_colour = hash_RGB(*symbol_px_RGB, *(symbol_px_RGB + 1), *(symbol_px_RGB + 2));
 		uint* pat_px_RGB = pattern_colours + 3*pat_px_index;
 		if(symbol_px_colour == 0xffffff)

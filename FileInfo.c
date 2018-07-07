@@ -6,9 +6,9 @@ void allocate_colour_data(struct file_info* file_data)
 	file_data->colour_vals = (uint*)malloc(3 * number_of_colour_vals * sizeof(uint));
 }
 
-void destroy_file(struct file_info* file_data)
+void destroy_file(struct file_info* file_data, byte should_dealloc_colours)
 {
-	if(file_data->colour_vals) free(file_data->colour_vals);
+	if(should_dealloc_colours && file_data->colour_vals) free(file_data->colour_vals);
 	free(file_data);
 }
 
