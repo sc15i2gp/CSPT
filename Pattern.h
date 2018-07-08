@@ -1,6 +1,7 @@
 #ifndef PATTERN_H
 #define PATTERN_H
 
+#include <math.h>
 #include "Map.h"
 #include "PPMFileData.h"
 #include "Parse.h"

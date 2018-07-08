@@ -37,6 +37,15 @@ void destroy_symbols(uint** symbols)
 	delete[] symbols;
 }
 
+void destroy_glyphs(uint** glyphs)
+{
+	for(uint i = 0; i < NUM_GLYPHS; i++)
+	{
+		delete[] glyphs[i];
+	}
+	delete[] glyphs;
+}
+
 uint** load_glyphs()
 {
 	printf("Loading glyphs...\n");
@@ -174,6 +183,11 @@ struct ppm_file_data* create_pattern_image_info(uint src_width, uint src_height)
 	return pattern_image;	
 }
 
+void copy_px_RGB(uint* src_px, uint* dest_px)
+{
+	for(uint i = 0; i < 3; i++) *(dest_px + i) = *(src_px + i);
+}
+
 void populate_pattern_colour_data(uint* src_colours, uint src_width, uint src_height, uint* pattern_colours, uint pattern_width, uint pattern_height, struct rb_tree* colour_map)
 {
 	uint** ps_list = load_symbols();
@@ -203,10 +217,7 @@ void populate_pattern_colour_data(uint* src_colours, uint src_width, uint src_he
 		uint symbol_px_colour = hash_RGB(*symbol_px_RGB, *(symbol_px_RGB + 1), *(symbol_px_RGB + 2));
 		uint* pat_px_RGB = pattern_colours + 3*pat_px_index;
 		uint* result_px_RGB = (symbol_px_colour == 0xffffff) ? src_px_RGB : symbol_px_RGB;
-		
-		*pat_px_RGB = 		*result_px_RGB;
-		*(pat_px_RGB + 1) = 	*(result_px_RGB + 1);
-		*(pat_px_RGB + 2) = 	*(result_px_RGB + 2);
+		copy_px_RGB(result_px_RGB, pat_px_RGB);
 	}
 	destroy_symbols(ps_list);
 }
@@ -351,15 +362,9 @@ void set_floss_to_symbol_rows(struct rb_tree* floss_to_symbol_map, struct cell_c
 // Generated the graphical version of a floss => symbol map
 void create_floss_to_symbol_pattern_map(struct rb_tree* floss_to_symbol_map)
 {
-	uint cell_size_coefficient = 1;
-	uint px_cell_length = cell_size_coefficient * 16;
-
-	uint** symbols = load_symbols();
-	uint** glyphs = load_glyphs();
-	
 	uint floss_count = count_nodes(floss_to_symbol_map);
 	uint pattern_map_height = 1 /*top padding*/ + 2 /*title + padding*/ + (2 * floss_count) /*each floss + padding*/;
-	uint pattern_map_width = 2 /*left/right padding*/ + 3 /*symbol + right padding*/ + 5 /*floss code + right padding*/;
+	uint pattern_map_width = 2 /*left/right padding*/ + 3 /*symbol + right padding*/ + 4 /*floss code*/;
 
 	struct cell_contents* pattern_map_cells = new struct cell_contents[pattern_map_height*pattern_map_width];
 
@@ -377,6 +382,68 @@ void create_floss_to_symbol_pattern_map(struct rb_tree* floss_to_symbol_map)
 	printf("Done making pattern map\n");
 	
 	//Convert pattern_map_cells to uint* colour vals
+	uint** symbols = load_symbols();
+	uint** glyphs = load_glyphs();
+	
+	uint cell_size_coefficient = 1;
+	uint px_cell_length = cell_size_coefficient * 16;
+
+	uint output_px_count = pattern_map_height * pattern_map_width * (px_cell_length*px_cell_length);
+
+	uint* floss_to_symbol_pattern = new uint[3*output_px_count];
+
+	for(uint i = 0; i < output_px_count; i++)
+	{
+		uint output_px_row = (uint)(i / (pattern_map_width*px_cell_length));
+		uint output_px_col = (uint)(i % (pattern_map_width*px_cell_length));
+		uint cell_row = (uint)(output_px_row / px_cell_length);
+		uint cell_col = (uint)(output_px_col / px_cell_length);
+		uint cell_index = (cell_row*pattern_map_width) + cell_col;
+
+		
+		uint first_px_in_cell_row = px_cell_length * cell_row;
+		uint first_px_in_cell_col = px_cell_length * cell_col;
+
+		uint src_px_row = output_px_row - first_px_in_cell_row;
+		uint src_px_col = output_px_col - first_px_in_cell_col;
+		uint src_px_cell_length = (uint)(px_cell_length / cell_size_coefficient);
+		uint src_index = (src_px_row*src_px_cell_length) + src_px_col;
+		uint* src_px;
+
+		enum cell_contents_type type = pattern_map_cells[cell_index].type;
+		if(type == CELL_SYMBOL)
+		{
+			src_px = symbols[pattern_map_cells[cell_index].ref] + (3*src_index);
+		}
+		else if(type == CELL_GLYPH)
+		{
+			src_px = glyphs[pattern_map_cells[cell_index].ref] + (3*src_index);
+		}
+		else
+		{
+			uint px[3] = {0xff, 0xff, 0xff};
+			src_px = px;
+		}
+
+		uint* dest_px = floss_to_symbol_pattern + 3*i;
+
+		copy_px_RGB(src_px, dest_px);
+	}
+
+	struct ppm_file_data* output_map = new struct ppm_file_data;
+	output_map->type = 3;
+	output_map->width = pattern_map_width*px_cell_length;
+	output_map->height = pattern_map_height*px_cell_length;
+	output_map->max_val = 255;
+	output_map->colour_vals = floss_to_symbol_pattern;
+
+	print_to_ppm("output_map.ppm", output_map);
+	
+	//delete[] floss_to_symbol_pattern;
+
+	destroy_file(output_map);
+	destroy_symbols(symbols);
+	destroy_glyphs(glyphs);
 
 	delete[] pattern_map_cells;
 }
