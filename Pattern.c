@@ -84,16 +84,15 @@ uint** load_glyphs()
 	return glyphs;
 }
 
-void print_colour_pair(struct kv_pair* p, uint colour)
+void print_floss_stitch_count_pair(struct kv_pair* p, uint colour)
 {
-	printf("{ Key: %02d | Value: %04d}\n", p->key, p->value);
+	printf("Floss %d has %d stitches\n", p->key, p->value);
 }
 
-void print_colour_map(struct rb_tree* t)
+void print_floss_to_stitch_count_map(struct rb_tree* t)
 {
 	printf("===========================================\n");
-	execute_for_each_pair(t, print_colour_pair);
-	printf("Number of colours = %d\n", count_nodes(t));
+	execute_for_each_pair(t, print_floss_stitch_count_pair);
 	printf("===========================================\n\n");
 }
 
@@ -102,12 +101,6 @@ void sum_stitch_value(struct kv_pair* p, uint* count)
 	*count += p->value;
 }
 
-void print_stitch_count(struct rb_tree* t)
-{
-	uint count = 0;
-	execute_for_each_pair(t, &count, sum_stitch_value);
-	printf("Total number of stitches = %d\n", count);
-}
 
 struct rb_tree* load_file_colours_into_map(struct ppm_file_data* file_data)
 {
@@ -122,7 +115,7 @@ struct rb_tree* load_file_colours_into_map(struct ppm_file_data* file_data)
 	return colour_map;
 }
 
-void count_colours_in_file(struct ppm_file_data* file_data)
+uint count_colours_in_file(struct ppm_file_data* file_data)
 {
 	printf("Counting...\n");
 	struct rb_tree* colour_map = load_file_colours_into_map(file_data);
@@ -135,9 +128,12 @@ void count_colours_in_file(struct ppm_file_data* file_data)
 		(*colour_map)[key]++;
 	}
 	printf("Counted\n");
-	print_colour_map(colour_map);
-	print_stitch_count(colour_map);
+	
+	uint count = 0;
+	execute_for_each_pair(colour_map, &count, sum_stitch_value);
 	destroy_rb_tree(colour_map);
+	
+	return count;
 }
 
 struct rb_tree* map_src_RGB_to_symbols(uint* src_colours, uint src_width, uint src_height)
@@ -359,10 +355,8 @@ void set_floss_to_symbol_rows(struct rb_tree* floss_to_symbol_map, struct cell_c
 }
 
 // Generated the graphical version of a floss => symbol map
-void create_floss_to_symbol_pattern_map(struct rb_tree* floss_to_symbol_map)
+uint* create_floss_to_symbol_pattern_map(struct rb_tree* floss_to_symbol_map, uint* px_map_width, uint* px_map_height)
 {
-	print_colour_map(floss_to_symbol_map);
-
 	uint floss_count = count_nodes(floss_to_symbol_map);
 	uint pattern_map_height = 1 /*top padding*/ + 2 /*title + padding*/ + (2 * floss_count) /*each floss + padding*/;
 	uint pattern_map_width = 2 /*left/right padding*/ + 3 /*symbol + right padding*/ + 4 /*floss code*/;
@@ -386,7 +380,7 @@ void create_floss_to_symbol_pattern_map(struct rb_tree* floss_to_symbol_map)
 	uint** symbols = load_symbols();
 	uint** glyphs = load_glyphs();
 	
-	uint cell_size_coefficient = 1;
+	uint cell_size_coefficient = 2;
 	uint px_cell_length = cell_size_coefficient * 16;
 
 	uint output_px_count = pattern_map_height * pattern_map_width * (px_cell_length*px_cell_length);
@@ -407,8 +401,8 @@ void create_floss_to_symbol_pattern_map(struct rb_tree* floss_to_symbol_map)
 
 		uint src_px_row = output_px_row - first_px_in_cell_row;
 		uint src_px_col = output_px_col - first_px_in_cell_col;
-		uint src_px_cell_length = (uint)(px_cell_length / cell_size_coefficient);
-		uint src_index = (src_px_row*src_px_cell_length) + src_px_col;
+		uint src_px_cell_length = 16; //(uint)(px_cell_length / cell_size_coefficient);
+		uint src_index = ((src_px_row/cell_size_coefficient)*src_px_cell_length) + (src_px_col / cell_size_coefficient);
 		uint* src_px;
 
 		enum cell_contents_type type = pattern_map_cells[cell_index].type;
@@ -431,59 +425,133 @@ void create_floss_to_symbol_pattern_map(struct rb_tree* floss_to_symbol_map)
 		copy_px_RGB(src_px, dest_px);
 	}
 
-	struct ppm_file_data* output_map = new struct ppm_file_data;
-	output_map->type = 3;
-	output_map->width = pattern_map_width*px_cell_length;
-	output_map->height = pattern_map_height*px_cell_length;
-	output_map->max_val = 255;
-	output_map->colour_vals = floss_to_symbol_pattern;
+	struct ppm_file_data* file = new struct ppm_file_data;
+	file->type = 3;
+	file->width = pattern_map_width*px_cell_length;
+	file->height = pattern_map_height*px_cell_length;
+	file->max_val = 255;
+	file->colour_vals = floss_to_symbol_pattern;
 
-	print_to_ppm("output_map.ppm", output_map);
-	
-	//delete[] floss_to_symbol_pattern;
-
-	destroy_file(output_map);
+	print_to_ppm("output_map.ppm", file);
 	destroy_symbols(symbols);
 	destroy_glyphs(glyphs);
 
 	delete[] pattern_map_cells;
+	*px_map_width = pattern_map_width * px_cell_length;
+	*px_map_height = pattern_map_height * px_cell_length;
+	return floss_to_symbol_pattern;
 }
 
 
 
-void create_pattern_from_src(struct ppm_file_data* src_image)
+struct pattern_info* create_pattern_from_src(struct ppm_file_data* src_image)
 {
-	count_colours_in_file(src_image);
-	
-	
 	
 	//Map of hashed RGB => pattern symbol
 	struct rb_tree* colour_to_symbol_map = map_src_RGB_to_symbols(src_image->colour_vals, src_image->width, src_image->height);
 	
 	struct rb_tree* colour_to_floss_map = create_DMC_floss_map();
 	struct rb_tree* floss_to_symbol_map = create_floss_to_symbol_map(colour_to_symbol_map, colour_to_floss_map);
-	
-	create_floss_to_symbol_pattern_map(floss_to_symbol_map);
+
+	uint pattern_map_width;
+	uint pattern_map_height;
+	uint* pattern_map_px = create_floss_to_symbol_pattern_map(floss_to_symbol_map, &pattern_map_width, &pattern_map_height);
 
 	
-	
-	struct ppm_file_data* pattern_image = create_pattern_image_info(src_image->width, src_image->height);
-	
-	populate_pattern_colour_data(src_image->colour_vals, src_image->width, src_image->height, pattern_image->colour_vals, pattern_image->width, pattern_image->height, colour_to_symbol_map);
 
+	uint pattern_width = src_image->width * 16;
+	uint pattern_height = src_image->height * 16;
+	uint* pattern_image_px = new uint[3*pattern_width * pattern_height];
 	
+	struct rb_tree* floss_to_stitch_count_map = create_rb_tree();
+
+	struct pattern_info* p_info = new struct pattern_info;
+	p_info->width_in_stitches = src_image->width;
+	p_info->height_in_stitches = src_image->height;
+	p_info->number_of_stitches = p_info->width_in_stitches * p_info->height_in_stitches;
+	for(uint i = 0; i < src_image->width * src_image->height; i++)
+	{
+		uint* src_px_index = src_image->colour_vals + 3*i;
+		uint colour = hash_RGB(*src_px_index, *(src_px_index + 1), *(src_px_index + 2));
+		uint floss_code = (*colour_to_floss_map)[colour];
+		(*floss_to_stitch_count_map)[floss_code]++;
+	}
+
+	p_info->floss_to_stitch_count_map = floss_to_stitch_count_map;
+
+	populate_pattern_colour_data(src_image->colour_vals, src_image->width, src_image->height, pattern_image_px, pattern_width, pattern_height, colour_to_symbol_map);
+
+
+	uint final_width = pattern_width + pattern_map_width;
+	uint final_height = (pattern_height > pattern_map_height) ? pattern_height : pattern_map_height;
+	uint final_px_count = final_width * final_height;
+	uint* final_image_px = new uint[3 * final_px_count];
+
+	uint white_px[3] = {0xff, 0xff, 0xff};
+
+	printf("pattern width + pattern map width = %d + %d = %d\n", pattern_width, pattern_map_width, final_width);
+	printf("pattern height + pattern map height = %d + %d = %d\n", pattern_height, pattern_map_height, final_height);
 	
-	print_to_ppm("output.ppm", pattern_image);
+	for(uint i = 0; i < final_px_count; i++)
+	{
+		uint final_px_row = (uint)(i / final_width);
+		uint final_px_col = (uint)(i % final_width);
+
+		uint src_row = final_px_row;
+		uint src_col = final_px_col;
+		uint* src_px;
+		if(final_px_col < pattern_width)
+		{
+			// If should copy px from pattern_image_px
+			uint src_index = src_row*pattern_width + src_col;
+			if(src_index < pattern_width * pattern_height)
+			{
+				src_px = pattern_image_px + 3*src_index;
+			}
+			else
+			{
+				src_px = white_px;
+			}
+		}
+		else
+		{
+			// If should copy px from pattern_map_px
+			src_col -= pattern_width;
+			uint src_index = src_row*pattern_map_width + src_col;
+			if(src_index < pattern_map_width * pattern_map_height)
+			{
+				src_px = pattern_map_px + 3*src_index;
+			}
+			else
+			{
+				src_px = white_px;
+			}
+		}
+		uint final_px_index = final_px_row*final_width + final_px_col;
+		uint* dest_px = final_image_px + 3*final_px_index;
+		copy_px_RGB(src_px, dest_px);
+	}
+	
+	delete[] pattern_map_px;
+	delete[] pattern_image_px;
+
+	struct ppm_file_data* final_image = new struct ppm_file_data;
+	final_image->type = 3;
+	final_image->width = final_width;
+	final_image->height = final_height;
+	final_image->max_val = 255;
+	final_image->colour_vals = final_image_px;
+	
+	print_to_ppm("output.ppm", final_image);
 
 	
 	destroy_rb_tree(floss_to_symbol_map);
 	destroy_rb_tree(colour_to_floss_map);
-	destroy_file(pattern_image);
+	destroy_file(final_image);
 	destroy_rb_tree(colour_to_symbol_map);
 	printf("Done creating pattern\n");
+	return p_info;
 }
-
-
 
 byte create_pattern(const char* src_image_path)
 {	
@@ -491,9 +559,22 @@ byte create_pattern(const char* src_image_path)
 	struct ppm_file_data* src_image = parse_ppm_file(src_image_path);
 	if(src_image)
 	{
-		create_pattern_from_src(src_image);
+		struct pattern_info* p_info = create_pattern_from_src(src_image);
 		pattern_created = 1;
+		
+		printf("\n================================================\n");
+		printf("Pattern output:\n");
+		printf("Width = %d stitches\n", p_info->width_in_stitches);
+		printf("Height = %d stitches\n", p_info->height_in_stitches);
+		printf("Total = %d stitches\n", p_info->number_of_stitches);
+		printf("Number of flosses = %d\n", p_info->number_of_colours);
+		print_floss_to_stitch_count_map(p_info->floss_to_stitch_count_map);	
+		printf("\n================================================\n");
+
+		destroy_rb_tree(p_info->floss_to_stitch_count_map);
+		delete p_info;	
 	}
+
 	destroy_file(src_image);
 	return pattern_created;
 }
