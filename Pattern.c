@@ -86,8 +86,7 @@ uint** load_glyphs()
 
 void print_colour_pair(struct kv_pair* p, uint colour)
 {
-	const char* c = (colour == RED) ? "RED" : "BLACK";
-	printf("{ Key: %06x | Value: %04d | Colour: %s }\n", p->key, p->value, c);
+	printf("{ Key: %02d | Value: %04d}\n", p->key, p->value);
 }
 
 void print_colour_map(struct rb_tree* t)
@@ -335,7 +334,7 @@ void set_floss_to_symbol_row(struct node* n, struct cell_contents* pattern_map_c
 			}
 			else if(i >= first_code_cell && i <= last_code_cell)
 			{
-				if(i - first_code_cell <= code_str_length)
+				if(i - first_code_cell < code_str_length)
 				{
 					char code_digit_str[2] = {code_str[i - first_code_cell], 0};
 
@@ -362,6 +361,8 @@ void set_floss_to_symbol_rows(struct rb_tree* floss_to_symbol_map, struct cell_c
 // Generated the graphical version of a floss => symbol map
 void create_floss_to_symbol_pattern_map(struct rb_tree* floss_to_symbol_map)
 {
+	print_colour_map(floss_to_symbol_map);
+
 	uint floss_count = count_nodes(floss_to_symbol_map);
 	uint pattern_map_height = 1 /*top padding*/ + 2 /*title + padding*/ + (2 * floss_count) /*each floss + padding*/;
 	uint pattern_map_width = 2 /*left/right padding*/ + 3 /*symbol + right padding*/ + 4 /*floss code*/;
