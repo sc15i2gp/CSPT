@@ -140,7 +140,7 @@ struct rb_tree* map_src_RGB_to_symbols(uint* src_colours, uint src_width, uint s
 {
 	struct rb_tree* colour_map = create_rb_tree();
 	uint i_max = src_width * src_height;
-	uint symbol_index = 1;
+	uint symbol_index = 2; // Makes sure white and black will be set to specific symbols
 	for(uint i = 0; i < i_max; i++)
 	{
 		uint* px_RGB = src_colours + 3*i;

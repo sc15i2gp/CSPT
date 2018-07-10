@@ -6,6 +6,9 @@
 
 //END RESULT: Program takes an image, creates a ppm by interpolating areas of colour, outputs a cross stitch pattern from this
 
+//TODO: Program doesn't output correct number of flosses in pattern_info: FIX
+
+
 //TODO: Tidy up code
 //	Unify symbols and glyphs functions
 //	Make glyphs code more general (could handle more letters if needs be)
@@ -20,7 +23,6 @@
 //	Make pattern_info printing function
 //IDEA: Could make general file interaction code and PPM specific code separate
 
-
 //TODO: Logger
 //	Debug, info, warning, error levels
 //	Can choose destination
@@ -28,9 +30,11 @@
 //TODO: Make sure program outputs everything it does
 //TODO: Make sure pattern info is properly logged, including src image and final image paths
 
-//TODO: Output ppm as jpg
-//TODO: Input jpg to ppm
-//TODO: Input jpg, interpolate areas of colour and create ppm from this
+//TODO: Determine if it is feasible to use latex to generate a pdf
+//	Latex used to lay out pattern, pattern map and pattern info
+//	pdf generated 
+
+//TODO: Make it so that output pattern can be separated into pages, where a bit of the pattern is shown
 
 //NOTE: Useful output info
 //	Number of stitches in a file
