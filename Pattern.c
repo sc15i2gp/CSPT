@@ -567,7 +567,7 @@ byte create_pattern(const char* src_image_path)
 		printf("Width = %d stitches\n", p_info->width_in_stitches);
 		printf("Height = %d stitches\n", p_info->height_in_stitches);
 		printf("Total = %d stitches\n", p_info->number_of_stitches);
-		printf("Number of flosses = %d\n", p_info->number_of_colours);
+		printf("Number of flosses = %d\n", count_nodes(p_info->floss_to_stitch_count_map));
 		print_floss_to_stitch_count_map(p_info->floss_to_stitch_count_map);	
 		printf("\n================================================\n");
 

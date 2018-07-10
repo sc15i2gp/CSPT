@@ -6,9 +6,6 @@
 
 //END RESULT: Program takes an image, creates a ppm by interpolating areas of colour, outputs a cross stitch pattern from this
 
-//TODO: Program doesn't output correct number of flosses in pattern_info: FIX
-
-
 //TODO: Tidy up code
 //	Unify symbols and glyphs functions
 //	Make glyphs code more general (could handle more letters if needs be)
