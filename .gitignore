@@ -57,5 +57,8 @@ dkms.conf
 *.ppm
 base_output_on_this.jpg
 
+# PDF
+pdf/*
+
 # vim
 *.swp

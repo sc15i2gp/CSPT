@@ -537,17 +537,20 @@ struct pattern_info* create_pattern_from_src(struct ppm_file_data* src_image)
 
 	struct ppm_file_data* final_image = new struct ppm_file_data;
 	final_image->type = 3;
-	final_image->width = final_width;
-	final_image->height = final_height;
+	//final_image->width = final_width;
+	//final_image->height = final_height;
+	final_image->width = pattern_width;
+	final_image->height = pattern_height;
 	final_image->max_val = 255;
-	final_image->colour_vals = final_image_px;
-	
+	//final_image->colour_vals = final_image_px;
+	final_image->colour_vals = pattern_image_px;
 	print_to_ppm("output.ppm", final_image);
 
 	
 	destroy_rb_tree(floss_to_symbol_map);
 	destroy_rb_tree(colour_to_floss_map);
-	destroy_file(final_image);
+	destroy_file(final_image, 0);
+	delete[] final_image_px;
 	destroy_rb_tree(colour_to_symbol_map);
 	printf("Done creating pattern\n");
 	return p_info;
