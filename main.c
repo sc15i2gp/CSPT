@@ -10,15 +10,6 @@
 //	single text file which is a string of a latex file, with python's .format() in mind
 //	python script formats it from output of this program
 
-//TODO: Have pattern be printed in files 30x30 stitches, make it easy to change this number
-//	Current create_pattern_from_src:
-//		Create maps
-//		Separate src into multiple pages
-//		For each page
-//			Create pattern image
-//		Create pattern_info
-//		Destroy maps
-//
 //TODO: Output p_info to file for use in generating pdf
 
 //TODO: Logger
@@ -30,6 +21,10 @@
 //TODO: Make sure pattern info is properly logged, including src image and final image paths
 
 //TODO: Make it so that output pattern can be separated into pages, where a bit of the pattern is shown
+
+//TODO: Have program gracefully fail
+//	When input file doesn't exist
+
 
 //NOTE: Useful output info
 //	Number of stitches in a file
@@ -47,7 +42,11 @@ int main(int argc, char** argv)
 	}
 	else
 	{
-		byte pattern_created = create_pattern(argv[1]);
+		const char* src_img_path = argv[1];
+		uint page_stitch_length = (argc > 2) ? atoi(argv[2]) : 50;
+		const char* output_dir = (argc > 3) ? argv[3] : "Output";
+		printf("CONVERTING %s | OUTPUT_DIR %s/ | PAGE LENGTH IN STITCHES %d\n", src_img_path, output_dir, page_stitch_length);
+		byte pattern_created = create_pattern(src_img_path, output_dir, page_stitch_length);
 		return !pattern_created;
 	}
 }

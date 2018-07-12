@@ -30,6 +30,6 @@ struct pattern_info
 	struct rb_tree* floss_to_stitch_count_map;
 };
 
-byte create_pattern(const char*);
+byte create_pattern(const char* src_path, const char* output_dir, uint page_stitch_length);
 
 #endif

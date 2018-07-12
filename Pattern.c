@@ -151,7 +151,7 @@ void populate_pattern_colour_data(uint* src_colours, uint src_width, uint src_he
 	destroy_symbols(ps_list);
 }
 
-void create_pattern_image(uint* src_colours, uint src_width, uint src_height, uint page, struct rb_tree* colour_to_symbol_map)
+void create_pattern_image(const char* output_dir, uint* src_colours, uint src_width, uint src_height, uint page, struct rb_tree* colour_to_symbol_map)
 {
 	uint pattern_width = 	src_width * 16;
 	uint pattern_height = 	src_height * 16;
@@ -164,7 +164,7 @@ void create_pattern_image(uint* src_colours, uint src_width, uint src_height, ui
 	final_image->colour_vals = pattern_image_px;
 	
 	char* path = new char[14];
-	sprintf(path, "output_%02d.ppm", page);
+	sprintf(path, "%s/output_%02d.ppm", output_dir, page);
 	print_to_ppm(path, final_image);
 	
 	delete[] path;
@@ -226,12 +226,11 @@ void destroy_pages(uint** src_pages, uint page_count)
 	delete[] src_pages;
 }
 
-void create_pattern_from_src(struct ppm_file_data* src_image)
+void create_pattern_from_src(struct ppm_file_data* src_image, const char* output_dir, uint page_stitch_length)
 {
 	struct rb_tree* colour_to_symbol_map = 		map_src_colours_to_symbols(src_image->colour_vals, src_image->width, src_image->height);	
 	struct rb_tree* colour_to_floss_map = 		create_DMC_floss_map();
 
-	uint page_stitch_length = 65; // Temporary for PoC
 	uint page_count;
 	
 	uint** src_pages = split_src_into_pages(src_image, page_stitch_length, page_count);
@@ -240,7 +239,7 @@ void create_pattern_from_src(struct ppm_file_data* src_image)
 
 	for(uint i = 0; i < page_count; i++)
 	{
-		create_pattern_image(src_pages[i], page_stitch_length, page_stitch_length, i, colour_to_symbol_map);
+		create_pattern_image(output_dir, src_pages[i], page_stitch_length, page_stitch_length, i, colour_to_symbol_map);
 	}
 
 	create_pattern_info(src_image, colour_to_floss_map);
@@ -256,13 +255,13 @@ void create_pattern_from_src(struct ppm_file_data* src_image)
 }
 
 
-byte create_pattern(const char* src_image_path)
+byte create_pattern(const char* src_image_path, const char* output_dir, uint page_stitch_length)
 {	
 	byte pattern_created = 0;
 	struct ppm_file_data* src_image = parse_ppm_file(src_image_path);
 	if(src_image)
 	{
-		create_pattern_from_src(src_image);
+		create_pattern_from_src(src_image, output_dir, page_stitch_length);
 		pattern_created = 1;		
 	}
 

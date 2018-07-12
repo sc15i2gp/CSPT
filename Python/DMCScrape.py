@@ -52,4 +52,3 @@ target_file.write("struct rb_tree* create_DMC_floss_map();\n\n")
 target_file.write("#endif\n")
 
 target_file.close()
-print(number_of_pairs)
