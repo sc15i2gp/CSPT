@@ -10,6 +10,9 @@ $(EXE):
 .PHONY: clean build
 .default: build
 
-build: $(EXE)
+dmcgen:
+	python3 Python/DMCScrape.py
+
+build: dmcgen $(EXE)
 clean:
 	rm $(EXE)
