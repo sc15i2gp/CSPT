@@ -1,11 +1,22 @@
 import urllib.request
+import os.path
 from bs4 import BeautifulSoup
 
 # Get DMC floss table
 
 page_url = "https://www.csh.rit.edu/~vance/pages/color.html"
-page = urllib.request.urlopen(page_url)
+if not os.path.isfile("dmc_chart.html"):
+    page = urllib.request.urlopen(page_url)
+else:
+    with open("dmc_chart.html", "r") as file:
+            page = file.read()
+
 s_page = BeautifulSoup(page, 'html.parser')
+
+if not os.path.isfile("dmc_chart.html"):
+    with open("dmc_chart.html", "w") as file:
+        file.write(str(s_page))
+
 rows = s_page.find_all('tr')
 
 # Remove title table row

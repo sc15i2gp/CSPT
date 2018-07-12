@@ -56,6 +56,7 @@ dkms.conf
 *.xcf
 *.ppm
 base_output_on_this.jpg
+*.html
 
 # PDF
 pdf/*
