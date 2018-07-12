@@ -40,3 +40,8 @@ fi
 rm Output/*
 
 ./CSPT.exe "${INPUT_PPM}" "${PAGE_STITCH_COUNT}" "${OUTPUT_DIR}"
+
+for f in Output/*.ppm; do
+	convert "$f" "${f%.ppm}.jpg"
+	rm "$f"
+done

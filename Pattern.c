@@ -18,7 +18,7 @@ void print_pattern_info(struct pattern_info* p_info, const char* output_dir)
 	printf("Number of pages = %d\n", p_info->number_of_pages);
 	print_floss_to_stitch_count_map(p_info->floss_to_stitch_count_map);
 	printf("\n================================================\n");
-	const char* dict_str = "{'width' : %d, 'height' : %d, 'total' : %d, 'floss_count' : %d, 'page_count' : %d }\n";
+	const char* dict_str = "{'width' : %d, 'height' : %d, 'total' : %d, 'floss_count' : %d, 'page_count' : %d }";
 	char* to_print = new char[2*strlen(dict_str)];
 	sprintf(to_print, dict_str, p_info->width_in_stitches, p_info->height_in_stitches, p_info->number_of_stitches, count_nodes(p_info->floss_to_stitch_count_map), p_info->number_of_pages);
 	char* path = new char[128];

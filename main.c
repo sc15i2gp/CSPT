@@ -10,7 +10,13 @@
 //	single text file which is a string of a latex file, with python's .format() in mind
 //	python script formats it from output of this program
 
-//TODO: Output p_info to file for use in generating pdf
+//TODO: Sample pattern pdf
+
+//TODO: Run script runs convert Output/*.ppm to Output/*.jpg
+
+//TODO: Python file which converts outputted ppms/jpgs to pdf
+//	Uses p_info and outputs tex file
+
 
 //TODO: Logger
 //	Debug, info, warning, error levels
@@ -25,6 +31,8 @@
 //TODO: Have program gracefully fail
 //	When input file doesn't exist
 
+//TODO: Environment variables 
+//	Directories
 
 //NOTE: Useful output info
 //	Number of stitches in a file
