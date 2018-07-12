@@ -25,6 +25,8 @@ struct pattern_info
 	uint height_in_stitches;
 	uint number_of_stitches;
 	uint number_of_colours;
+	uint number_of_pages;
+	uint length_of_page; // In stitches
 	struct rb_tree* floss_to_stitch_count_map;
 };
 

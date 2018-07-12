@@ -10,12 +10,16 @@
 //	single text file which is a string of a latex file, with python's .format() in mind
 //	python script formats it from output of this program
 
-//TODO: Have python program save html once then use that file
-
-//TODO: Use makefile to run DMC generation before building c files
-
+//TODO: Have pattern be printed in files 30x30 stitches, make it easy to change this number
+//	Current create_pattern_from_src:
+//		Create maps
+//		Separate src into multiple pages
+//		For each page
+//			Create pattern image
+//		Create pattern_info
+//		Destroy maps
+//
 //TODO: Output p_info to file for use in generating pdf
-
 
 //TODO: Logger
 //	Debug, info, warning, error levels

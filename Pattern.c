@@ -151,47 +151,110 @@ void populate_pattern_colour_data(uint* src_colours, uint src_width, uint src_he
 	destroy_symbols(ps_list);
 }
 
-
-void create_pattern_from_src(struct ppm_file_data* src_image)
+void create_pattern_image(uint* src_colours, uint src_width, uint src_height, uint page, struct rb_tree* colour_to_symbol_map)
 {
-	struct rb_tree* colour_to_symbol_map = 		map_src_colours_to_symbols(src_image->colour_vals, src_image->width, src_image->height);	
-	struct rb_tree* colour_to_floss_map = 		create_DMC_floss_map();
-	struct rb_tree* floss_to_stitch_count_map = 	count_floss_stitches(colour_to_floss_map, src_image->colour_vals, src_image->width, src_image->height);
-	
-	uint pattern_width = 	src_image->width * 16;
-	uint pattern_height = 	src_image->height * 16;
-	
-	uint* pattern_image_px = new uint[3*pattern_width * pattern_height];
+	uint pattern_width = 	src_width * 16;
+	uint pattern_height = 	src_height * 16;
 
+	uint* pattern_image_px = new uint[3*pattern_width * pattern_height];
+	
+	populate_pattern_colour_data(src_colours, src_width, src_height, pattern_image_px, pattern_width, pattern_height, colour_to_symbol_map);
+
+	struct ppm_file_data* final_image = create_ppm_data(pattern_width, pattern_height);
+	final_image->colour_vals = pattern_image_px;
+	
+	char* path = new char[14];
+	sprintf(path, "output_%02d.ppm", page);
+	print_to_ppm(path, final_image);
+	
+	delete[] path;
+	destroy_file(final_image);
+}
+
+void create_pattern_info(struct ppm_file_data* src_image, struct rb_tree* colour_to_floss_map)
+{
+	struct rb_tree* floss_to_stitch_count_map = count_floss_stitches(colour_to_floss_map, src_image->colour_vals, src_image->width, src_image->height);
+	
 	struct pattern_info* p_info = new struct pattern_info;
 	
 	p_info->width_in_stitches = 		src_image->width;
 	p_info->height_in_stitches = 		src_image->height;
 	p_info->number_of_stitches = 		p_info->width_in_stitches * p_info->height_in_stitches;
 	p_info->floss_to_stitch_count_map = 	floss_to_stitch_count_map;
-
-	populate_pattern_colour_data(src_image->colour_vals, src_image->width, src_image->height, pattern_image_px, pattern_width, pattern_height, colour_to_symbol_map);
-
-	struct ppm_file_data* final_image = create_ppm_data(pattern_width, pattern_height);
-	final_image->colour_vals = pattern_image_px;
 	
-	print_to_ppm("output.ppm", final_image);	
+	print_pattern_info(p_info);
+
+	destroy_rb_tree(p_info->floss_to_stitch_count_map);
+	delete p_info;
+}
+
+uint** split_src_into_pages(struct ppm_file_data* src_image, uint page_stitch_length, uint& page_count)
+{
+	uint page_width = (uint) ceil((float)src_image->width / (float)page_stitch_length);
+	uint page_height = (uint) ceil((float)src_image->height / (float)page_stitch_length);
+	page_count = page_width * page_height;
+
+	uint** pages = new uint*[page_count];
 	
-	printf("Done creating pattern\n");
+	for(uint i = 0; i < page_count; i++)
+	{
+		uint* page = new uint[3*page_stitch_length * page_stitch_length];
+		for(uint j = 0; j < page_stitch_length*page_stitch_length; j++)
+		{
+			// Get src px
+			uint white[3] = {0xff, 0xff, 0xff};
+
+			uint src_px_row = (i/page_width)*page_stitch_length + (j/page_stitch_length);
+			uint src_px_col = (i%page_width)*page_stitch_length + (j % page_stitch_length);
+			uint src_px_index = src_px_row*src_image->width + src_px_col;
+
+			uint* src_px = (src_px_row >= src_image->height || src_px_col >= src_image->width) ? white : src_image->colour_vals + 3 * src_px_index;
+			
+			uint* dest_px = page + 3*j;
+			// Copy src to dest
+			copy_px_RGB(src_px, dest_px);
+		}
+		pages[i] = page;
+	}
+
+	return pages;	
+}
+
+void destroy_pages(uint** src_pages, uint page_count)
+{
+	for(uint i = 0; i < page_count; i++) delete[] src_pages[i];
+	delete[] src_pages;
+}
+
+void create_pattern_from_src(struct ppm_file_data* src_image)
+{
+	struct rb_tree* colour_to_symbol_map = 		map_src_colours_to_symbols(src_image->colour_vals, src_image->width, src_image->height);	
+	struct rb_tree* colour_to_floss_map = 		create_DMC_floss_map();
+
+	uint page_stitch_length = 65; // Temporary for PoC
+	uint page_count;
+	
+	uint** src_pages = split_src_into_pages(src_image, page_stitch_length, page_count);
+
+	printf("Required pages = %d\n", page_count);
+
+	for(uint i = 0; i < page_count; i++)
+	{
+		create_pattern_image(src_pages[i], page_stitch_length, page_stitch_length, i, colour_to_symbol_map);
+	}
+
+	create_pattern_info(src_image, colour_to_floss_map);
 	
 	struct rb_tree* floss_to_symbol_map = create_floss_to_symbol_map(colour_to_symbol_map, colour_to_floss_map); //TODO: Print this info to file
 
-	print_pattern_info(p_info);
-	
-	
+
+	destroy_pages(src_pages, page_count);
+
 	destroy_rb_tree(floss_to_symbol_map);
 	destroy_rb_tree(colour_to_floss_map);
 	destroy_rb_tree(colour_to_symbol_map);
-	destroy_rb_tree(p_info->floss_to_stitch_count_map);
-	delete p_info;
-
-	destroy_file(final_image);
 }
+
 
 byte create_pattern(const char* src_image_path)
 {	
