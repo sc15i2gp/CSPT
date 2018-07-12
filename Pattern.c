@@ -7,7 +7,7 @@ void print_floss_to_stitch_count_map(struct rb_tree* t)
 	printf("===========================================\n\n");
 }
 
-void print_pattern_info(struct pattern_info* p_info)
+void print_pattern_info(struct pattern_info* p_info, const char* output_dir)
 {
 	printf("\n================================================\n");
 	printf("Pattern output:\n");
@@ -15,8 +15,17 @@ void print_pattern_info(struct pattern_info* p_info)
 	printf("Height = %d stitches\n", p_info->height_in_stitches);
 	printf("Total = %d stitches\n", p_info->number_of_stitches);
 	printf("Number of flosses = %d\n", count_nodes(p_info->floss_to_stitch_count_map));
-	print_floss_to_stitch_count_map(p_info->floss_to_stitch_count_map);	
+	printf("Number of pages = %d\n", p_info->number_of_pages);
+	print_floss_to_stitch_count_map(p_info->floss_to_stitch_count_map);
 	printf("\n================================================\n");
+	const char* dict_str = "{'width' : %d, 'height' : %d, 'total' : %d, 'floss_count' : %d, 'page_count' : %d }\n";
+	char* to_print = new char[2*strlen(dict_str)];
+	sprintf(to_print, dict_str, p_info->width_in_stitches, p_info->height_in_stitches, p_info->number_of_stitches, count_nodes(p_info->floss_to_stitch_count_map), p_info->number_of_pages);
+	char* path = new char[128];
+	sprintf(path, "%s/pattern_info", output_dir);
+	print_to_file(path, to_print);
+	delete[] path;
+	delete[] to_print;
 }
 
 
@@ -171,7 +180,7 @@ void create_pattern_image(const char* output_dir, uint* src_colours, uint src_wi
 	destroy_file(final_image);
 }
 
-void create_pattern_info(struct ppm_file_data* src_image, struct rb_tree* colour_to_floss_map)
+void create_pattern_info(struct ppm_file_data* src_image, struct rb_tree* colour_to_floss_map, const char* output_dir, uint page_count)
 {
 	struct rb_tree* floss_to_stitch_count_map = count_floss_stitches(colour_to_floss_map, src_image->colour_vals, src_image->width, src_image->height);
 	
@@ -181,8 +190,8 @@ void create_pattern_info(struct ppm_file_data* src_image, struct rb_tree* colour
 	p_info->height_in_stitches = 		src_image->height;
 	p_info->number_of_stitches = 		p_info->width_in_stitches * p_info->height_in_stitches;
 	p_info->floss_to_stitch_count_map = 	floss_to_stitch_count_map;
-	
-	print_pattern_info(p_info);
+	p_info->number_of_pages = 		page_count;
+	print_pattern_info(p_info, output_dir);
 
 	destroy_rb_tree(p_info->floss_to_stitch_count_map);
 	delete p_info;
@@ -235,14 +244,12 @@ void create_pattern_from_src(struct ppm_file_data* src_image, const char* output
 	
 	uint** src_pages = split_src_into_pages(src_image, page_stitch_length, page_count);
 
-	printf("Required pages = %d\n", page_count);
-
 	for(uint i = 0; i < page_count; i++)
 	{
 		create_pattern_image(output_dir, src_pages[i], page_stitch_length, page_stitch_length, i, colour_to_symbol_map);
 	}
 
-	create_pattern_info(src_image, colour_to_floss_map);
+	create_pattern_info(src_image, colour_to_floss_map, output_dir, page_count);
 	
 	struct rb_tree* floss_to_symbol_map = create_floss_to_symbol_map(colour_to_symbol_map, colour_to_floss_map); //TODO: Print this info to file
 

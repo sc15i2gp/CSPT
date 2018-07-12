@@ -24,4 +24,5 @@ struct ppm_file_data* create_ppm_data(uint width, uint height);
 void allocate_colour_data(struct ppm_file_data*);
 void destroy_file(struct ppm_file_data*, byte should_dealloc_colours = 1);
 void print_to_ppm(const char* file_name, struct ppm_file_data*);
+void print_to_file(const char* path, const char* to_print);
 #endif
