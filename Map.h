@@ -40,7 +40,6 @@ struct kv_pair* get_pair_of_key(struct rb_tree*, uint key);
 byte is_balanced(struct rb_tree*);
 byte insert_kv_pair(struct rb_tree*, struct kv_pair pair);
 byte is_key_in_tree(struct rb_tree*, uint key);
-void execute_for_each_pair(struct rb_tree*, void (*func)(struct kv_pair*, uint));
-void execute_for_each_pair(struct rb_tree*, uint*, void (*func)(struct kv_pair*, uint*));
+void print_kv_pairs(struct rb_tree*, const char* formatted_str);
 uint count_nodes(struct rb_tree*);
 #endif

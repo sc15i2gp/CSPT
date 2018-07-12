@@ -1,5 +1,16 @@
 #include "PPMFileData.h"
 
+struct ppm_file_data* create_ppm_data(uint width, uint height)
+{
+	struct ppm_file_data* ppm = new struct ppm_file_data;
+	ppm->type = 3;
+	ppm->max_val = 255;
+	
+	ppm->width = width;
+	ppm->height = height;
+	return ppm;
+}
+
 void allocate_colour_data(struct ppm_file_data* file_data)
 {
 	uint number_of_colour_vals = file_data->width * file_data->height;

@@ -1,6 +1,10 @@
 #ifndef PPM_FILE_DATA_H
 #define PPM_FILE_DATA_H
 
+//PPM standard values:
+//	Type = 3 (says that the file is a ppm)
+//	max_val = 255 (ppms will always store info as raw ascii)
+
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -16,6 +20,7 @@ struct ppm_file_data
 	uint* 	colour_vals;
 };
 
+struct ppm_file_data* create_ppm_data(uint width, uint height);
 void allocate_colour_data(struct ppm_file_data*);
 void destroy_file(struct ppm_file_data*, byte should_dealloc_colours = 1);
 void print_to_ppm(const char* file_name, struct ppm_file_data*);

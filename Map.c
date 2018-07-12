@@ -294,22 +294,6 @@ byte insert_kv_pair(struct rb_tree* t, struct kv_pair pair)
 
 
 //Really not a fan of the way I've done this, restructure TODO?
-void execute_for_each_pair(struct node* n, void (*func)(struct kv_pair*, uint))
-{
-	if(n)
-	{
-		struct kv_pair* p = &(n->pair);
-		execute_for_each_pair(n->left_child, func);
-		func(p, n->colour);
-		execute_for_each_pair(n->right_child, func);
-	}
-}
-
-void execute_for_each_pair(struct rb_tree* t, void (*func)(struct kv_pair*, uint))
-{
-	execute_for_each_pair(t->root, func);	
-}
-
 void execute_for_each_pair(struct node* n, uint* ptr, void (*func)(struct kv_pair*, uint*))
 {
 	if(n)
@@ -326,3 +310,17 @@ void execute_for_each_pair(struct rb_tree* t, uint* ptr, void (*func)(struct kv_
 	execute_for_each_pair(t->root, ptr, func);
 }
 
+void print_kv_pairs(struct node* n, const char* formatted_str)
+{
+	if(n)
+	{
+		print_kv_pairs(n->left_child, formatted_str);
+		printf(formatted_str, n->pair.key, n->pair.value);
+		print_kv_pairs(n->right_child, formatted_str);
+	}
+}
+
+void print_kv_pairs(struct rb_tree* t, const char* formatted_str)
+{
+	print_kv_pairs(t->root, formatted_str);
+}

@@ -22,7 +22,7 @@ for row in rows:
 target_file = open("DMC.h", "w")
 
 # Print macros
-target_file.write("#ifndef DMC_H\n#define DMC_H\n\n#include \"Pair.h\"\n\n")
+target_file.write("#ifndef DMC_H\n#define DMC_H\n\n#include \"Map.h\"\n\n")
 
 # Print pairs
 number_of_pairs = len(map_data)
@@ -36,8 +36,8 @@ for i in range(number_of_pairs):
         target_file.write(",")
     target_file.write("\n")
 
-target_file.write("};\n\n")
-
+target_file.write("};\n")
+target_file.write("struct rb_tree* create_DMC_floss_map();\n\n")
 target_file.write("#endif\n")
 
 target_file.close()

@@ -1,13 +1,13 @@
 #ifndef DMC_H
 #define DMC_H
 
-#include "Pair.h"
+#include "Map.h"
 
 #define FLOSS_COUNT 360
 
 static struct kv_pair DMC_flosses[FLOSS_COUNT] = 
 {
-kv_pair{0xFFFFFF, 000},
+kv_pair{0xFFFFFF , 000},
 kv_pair{0x945B80, 208},
 kv_pair{0xCE94BA, 209},
 kv_pair{0xECCFE1, 210},
@@ -368,5 +368,6 @@ kv_pair{0x8B6D73, 3787},
 kv_pair{0x8C756D, 3790},
 kv_pair{0x514C53, 3799}
 };
+struct rb_tree* create_DMC_floss_map();
 
 #endif
