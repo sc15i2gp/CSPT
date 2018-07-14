@@ -10,9 +10,10 @@
 //	single text file which is a string of a latex file, with python's .format() in mind
 //	python script formats it from output of this program
 
-//TODO: Sample pattern pdf
+//TODO: Since accidentally deleting ppm, need to change parser slightly
+//	Distribute jpgs, script to convert jpgs to ppm
 
-//TODO: Run script runs convert Output/*.ppm to Output/*.jpg
+//TODO: Sample pattern pdf
 
 //TODO: Python file which converts outputted ppms/jpgs to pdf
 //	Uses p_info and outputs tex file

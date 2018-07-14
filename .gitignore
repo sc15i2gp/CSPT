@@ -58,6 +58,7 @@ dkms.conf
 base_output_on_this.jpg
 *.html
 Output/*
+Symbols/*.ppm
 
 # PDF
 pdf/*
