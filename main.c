@@ -10,10 +10,14 @@
 //	single text file which is a string of a latex file, with python's .format() in mind
 //	python script formats it from output of this program
 
-//TODO: Since accidentally deleting ppm, need to change parser slightly
-//	Distribute jpgs, script to convert jpgs to ppm
+//TODO: Redeploy symbols to ppm and jpg from xcf
 
 //TODO: Sample pattern pdf
+
+//TODO: Output floss to symbol and floss to stitch count maps to p_info file
+//	Make standard functions for outputting data as a python dict to file/string
+//	
+
 
 //TODO: Python file which converts outputted ppms/jpgs to pdf
 //	Uses p_info and outputs tex file
